@@ -40,7 +40,7 @@ const ContributorBadge: ProfileBadge = {
     iconSrc: CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
     shouldShow: ({ userId }) => shouldShowContributorBadge(userId),
-    onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId))
+    onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank")
 };
 
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;

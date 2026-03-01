@@ -66,6 +66,7 @@ const Ujc2Badge: ProfileBadge = {
         },
     },
     shouldShow: ({ userId }) => userId === "1149839746588229754",
+    onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
 // Bug hunter badge — shown to users who reported bugs
@@ -80,6 +81,7 @@ const BugHunterBadge: ProfileBadge = {
         },
     },
     shouldShow: ({ userId }) => BUG_HUNTER_USERS.has(userId),
+    onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
 // Personal 7n7 badge — only shown on the creator's profile
