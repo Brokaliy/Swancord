@@ -26,9 +26,9 @@ const SWANCORD_BADGE_USERS = new Set<string>([
     "320171386016628747",
 ]);
 
-const CREATOR_BADGE_ICON = "swancord:///assets/CreatorBadge.png";
-const PERSONAL_7N7_ICON = "swancord:///assets/7n7Icon.png";
-const TWINK_BADGE_ICON = "swancord:///assets/TwinkIcon.png";
+const CREATOR_BADGE_ICON = "https://7n7.dev/badges/CreatorBadge.png";
+const PERSONAL_7N7_ICON = "https://7n7.dev/badges/7n7Icon.png";
+const TWINK_BADGE_ICON = "https://7n7.dev/badges/TwinkIcon.png";
 
 // Shown to everyone in SWANCORD_BADGE_USERS
 const SwancordBadge: ProfileBadge = {
