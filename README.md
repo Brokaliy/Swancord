@@ -17,7 +17,7 @@ The best Discord client mod
 
 ## Installing / Uninstalling
 
-Visit https://swancord.dev/download
+Visit https://7n7.dev/swancord
 
 ## Join our Support/Community Server
 
