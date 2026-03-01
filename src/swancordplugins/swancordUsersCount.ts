@@ -72,18 +72,20 @@ function removeWidget() {
     document.getElementById(EL_ID)?.remove();
 }
 
-let observer: MutationObserver | null = null;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 function startObserver() {
-    if (observer) return;
-    observer = new MutationObserver(() => {
-        if (document.querySelector("[class*=\"peopleColumn_\"]")) {
+    if (pollInterval) return;
+    // Poll at low frequency — much safer than MutationObserver on document.body
+    pollInterval = setInterval(() => {
+        const onFriendsPage = !!document.querySelector("[class*=\"peopleColumn_\"]");
+        const el = document.getElementById(EL_ID);
+        if (onFriendsPage) {
             updateWidget();
-        } else {
-            removeWidget();
+        } else if (el) {
+            el.style.display = "none";
         }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    }, 750);
 }
 
 function injectStyle() {
@@ -134,8 +136,7 @@ export default definePlugin({
     },
 
     stop() {
-        observer?.disconnect();
-        observer = null;
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         FluxDispatcher.unsubscribe("PRESENCE_UPDATES", recount);
         removeWidget();
         document.getElementById(STYLE_ID)?.remove();
