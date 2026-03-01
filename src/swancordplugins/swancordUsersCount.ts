@@ -39,22 +39,24 @@ function recount() {
 
 // ── DOM widget ────────────────────────────────────────────────────────────
 
-function getOrCreateWidget(): HTMLElement | null {
-    const target = document.querySelector<HTMLElement>("[class*=\"peopleColumn_\"]");
-    if (!target) return null;
-
+function getOrCreateWidget(): HTMLElement {
     let el = document.getElementById(EL_ID);
     if (!el) {
         el = document.createElement("div");
         el.id = EL_ID;
-        target.insertBefore(el, target.firstChild);
+        document.body.appendChild(el);
     }
     return el;
 }
 
 function updateWidget() {
     const el = getOrCreateWidget();
-    if (!el) return;
+
+    // Only show when the friends/people page is open
+    const onFriendsPage = !!document.querySelector("[class*=\"peopleColumn_\"]");
+    el.style.display = onFriendsPage ? "flex" : "none";
+    if (!onFriendsPage) return;
+
     el.innerHTML = `
         <span class="sc-sc-icon">🦢</span>
         <span class="sc-sc-label">Swancord Users</span>
@@ -90,31 +92,30 @@ function injectStyle() {
     style.id = STYLE_ID;
     style.textContent = `
         #${EL_ID} {
-            display: flex;
+            display: none;
+            position: fixed;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
             align-items: center;
             gap: 6px;
-            padding: 8px 16px 6px;
+            padding: 5px 14px;
             font-size: 0.72rem;
             font-weight: 600;
             letter-spacing: 0.04em;
             text-transform: uppercase;
             color: var(--text-muted);
-            border-bottom: 1px solid var(--background-modifier-accent);
-            margin-bottom: 4px;
-            user-select: none;
+            background: var(--background-secondary);
+            border: 1px solid var(--background-modifier-accent);
+            border-radius: 0 0 8px 8px;
+            z-index: 100;
+            pointer-events: none;
+            white-space: nowrap;
         }
-        #${EL_ID} .sc-sc-label {
-            flex: 1;
-            color: var(--header-secondary);
-        }
-        #${EL_ID} .sc-sc-counts {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        #${EL_ID} .sc-sc-online  { color: #23a55a; font-weight: 700; }
-        #${EL_ID} .sc-sc-sep     { color: var(--text-muted); opacity: 0.5; }
-        #${EL_ID} .sc-sc-total   { color: var(--text-muted); }
+        #${EL_ID} .sc-sc-label  { color: var(--header-secondary); margin-right: 2px; }
+        #${EL_ID} .sc-sc-online { color: #23a55a; font-weight: 700; }
+        #${EL_ID} .sc-sc-sep    { opacity: 0.4; }
+        #${EL_ID} .sc-sc-total  { color: var(--text-muted); }
     `;
     document.head.appendChild(style);
 }
