@@ -23,11 +23,12 @@ import definePlugin from "@utils/types";
 // Hardcoded IDs that get the "Swancord" badge.
 // Add user IDs here for anyone who should have it.
 const SWANCORD_BADGE_USERS = new Set<string>([
-    "320171386016628747", // 7n7 (1cwo) — creator
+    "320171386016628747",
 ]);
 
 const CREATOR_BADGE_ICON = "swancord:///assets/CreatorBadge.png";
 const PERSONAL_7N7_ICON = "swancord:///assets/7n7Icon.png";
+const TWINK_BADGE_ICON = "swancord:///assets/TwinkIcon.png";
 
 // Shown to everyone in SWANCORD_BADGE_USERS
 const SwancordBadge: ProfileBadge = {
@@ -44,6 +45,20 @@ const SwancordBadge: ProfileBadge = {
     onClick: () => {
         window.open("https://7n7.dev/swancord", "_blank");
     },
+};
+
+// ujc2 personal badge
+const Ujc2Badge: ProfileBadge = {
+    description: "Twink",
+    iconSrc: TWINK_BADGE_ICON,
+    position: BadgePosition.START,
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)",
+        },
+    },
+    shouldShow: ({ userId }) => userId === "1149839746588229754",
 };
 
 // Personal 7n7 badge — only shown on the creator's profile
@@ -72,10 +87,12 @@ export default definePlugin({
     start() {
         addProfileBadge(SwancordBadge);
         addProfileBadge(Personal7n7Badge);
+        addProfileBadge(Ujc2Badge);
     },
 
     stop() {
         removeProfileBadge(SwancordBadge);
         removeProfileBadge(Personal7n7Badge);
+        removeProfileBadge(Ujc2Badge);
     },
 });
