@@ -16,3 +16,4 @@ export { default as CloudTab } from "./sync/CloudTab";
 export { default as ThemesTab } from "./themes";
 export { default as UpdaterTab } from "./updater";
 export { default as SwancordTab } from "./swancord";
+export { default as InfoTab } from "./info";

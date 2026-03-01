@@ -1,32 +1,27 @@
 #!/usr/bin/env node
 // Swancord Installer
-// Modeled after the Vencord CLI installer experience.
 
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs";
-import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { createInterface } from "readline";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-import { execSync, spawnSync } from "child_process";
+import { join } from "path";
 import os from "os";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const RELEASE_BASE = "https://github.com/Brokaliy/Swancord/releases/download/devbuild";
+const FILES = ["patcher.js", "preload.js", "renderer.js", "renderer.css"];
 
 // ─── ANSI ──────────────────────────────────────────────────────────────────
 const R = "\x1b[0m";
 const Bold = s => `\x1b[1m${s}${R}`;
-const Dim  = s => `\x1b[2m${s}${R}`;
 const c = {
     white:  s => `\x1b[97m${s}${R}`,
     gray:   s => `\x1b[90m${s}${R}`,
     red:    s => `\x1b[91m${s}${R}`,
     green:  s => `\x1b[92m${s}${R}`,
     yellow: s => `\x1b[93m${s}${R}`,
-    blue:   s => `\x1b[94m${s}${R}`,
     cyan:   s => `\x1b[96m${s}${R}`,
 };
 
-function print(s = "")   { process.stdout.write(s + "\n"); }
+function print(s = "")    { process.stdout.write(s + "\n"); }
 function printRaw(s = "") { process.stdout.write(s); }
 
 // ─── HEADER ────────────────────────────────────────────────────────────────
@@ -81,11 +76,35 @@ async function pickFromList(items, prompt) {
     return items[n - 1] ?? null;
 }
 
+// ─── PATHS ─────────────────────────────────────────────────────────────────
+function getSwancordDir() {
+    const p = process.platform;
+    if (p === "win32")  return join(process.env.APPDATA ?? join(os.homedir(), "AppData", "Roaming"), "Swancord");
+    if (p === "darwin") return join(os.homedir(), "Library", "Application Support", "Swancord");
+    return join(os.homedir(), ".config", "Swancord");
+}
+
+// ─── DOWNLOAD ──────────────────────────────────────────────────────────────
+async function downloadFile(url, dest) {
+    const res = await fetch(url, { redirect: "follow" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+    const buf = await res.arrayBuffer();
+    writeFileSync(dest, Buffer.from(buf));
+}
+
+async function downloadLatest() {
+    const dir = getSwancordDir();
+    mkdirSync(dir, { recursive: true });
+    for (const file of FILES) {
+        await downloadFile(`${RELEASE_BASE}/${file}`, join(dir, file));
+    }
+    return dir;
+}
+
 // ─── DISCORD DETECTION ─────────────────────────────────────────────────────
 function getDiscordInstalls() {
     const installs = [];
     const platform = process.platform;
-
     const candidates = [];
 
     if (platform === "win32") {
@@ -103,7 +122,6 @@ function getDiscordInstalls() {
             { name: "Discord Canary",  dir: join(os.homedir(), "Library", "Application Support", "discordcanary") },
         );
     } else {
-        // Linux
         candidates.push(
             { name: "Discord Stable",  dir: join(os.homedir(), ".config", "discord") },
             { name: "Discord PTB",     dir: join(os.homedir(), ".config", "discordptb") },
@@ -111,93 +129,60 @@ function getDiscordInstalls() {
         );
     }
 
-    for (const c of candidates) {
-        if (!existsSync(c.dir)) continue;
-
-        // Find the versioned app dir (e.g. app-1.0.9020)
-        let appDir = null;
+    for (const candidate of candidates) {
+        if (!existsSync(candidate.dir)) continue;
         try {
-            const entries = readdirSync(c.dir).filter(e => e.startsWith("app-"));
-            if (entries.length === 0) continue;
+            const entries = readdirSync(candidate.dir).filter(e => e.startsWith("app-"));
+            if (!entries.length) continue;
             entries.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-            appDir = join(c.dir, entries[0], "modules");
-
-            // Find discord_desktop_core
+            const appDir = join(candidate.dir, entries[0], "modules");
             if (!existsSync(appDir)) continue;
             const coreDir = readdirSync(appDir).find(e => e.startsWith("discord_desktop_core"));
             if (!coreDir) continue;
             const coreModDir = join(appDir, coreDir, "discord_desktop_core");
             if (!existsSync(coreModDir)) continue;
-
-            installs.push({
-                name: c.name,
-                dir: c.dir,
-                coreDir: coreModDir,
-                label: c.name,
-                sub: coreModDir,
-            });
+            installs.push({ name: candidate.name, coreDir: coreModDir, label: candidate.name, sub: coreModDir });
         } catch { continue; }
     }
 
     return installs;
 }
 
-// ─── COPY DIST ─────────────────────────────────────────────────────────────
-async function copyRecursive(src, dest) {
-    await mkdir(dest, { recursive: true });
-    const entries = await readdir(src, { withFileTypes: true });
-    for (const entry of entries) {
-        const s = join(src, entry.name);
-        const d = join(dest, entry.name);
-        if (entry.isDirectory()) await copyRecursive(s, d);
-        else await copyFile(s, d);
-    }
+// ─── PATCH / UNPATCH ───────────────────────────────────────────────────────
+function isInstalled(discordInstall) {
+    const indexFile = join(discordInstall.coreDir, "index.js");
+    if (!existsSync(indexFile)) return false;
+    return readFileSync(indexFile, "utf-8").includes("// Swancord");
 }
 
-async function install(discordInstall) {
-    const distDir = join(__dirname, "dist");
-    if (!existsSync(distDir)) {
-        throw new Error("dist/ folder not found — run 'node scripts/build/build.mjs' first");
-    }
-
-    // Patch index.js in discord_desktop_core to require patcher.js
+function patchDiscord(discordInstall, swancordDir) {
     const indexFile = join(discordInstall.coreDir, "index.js");
     if (!existsSync(indexFile)) throw new Error("index.js not found in discord_desktop_core");
 
-    const indexContent = readFileSync(indexFile, "utf-8");
-    const patcherPath = join(distDir, "patcher.js").replace(/\\/g, "/");
+    const patcherPath = join(swancordDir, "patcher.js").replace(/\\/g, "/");
     const patchLine = `require("${patcherPath}");`;
+    const content = readFileSync(indexFile, "utf-8");
 
     let newContent;
-    if (indexContent.includes(patchLine)) {
-        newContent = indexContent; // already patched
-    } else if (indexContent.includes("// Swancord")) {
-        // Update existing swancord patch line
-        newContent = indexContent.replace(/require\(".*patcher\.js"\);/, patchLine);
+    if (content.includes(patchLine)) {
+        newContent = content; // already up to date
+    } else if (content.includes("// Swancord")) {
+        newContent = content.replace(/require\(".*patcher\.js"\);/, patchLine);
     } else {
-        newContent = `// Swancord\n${patchLine}\n\n${indexContent}`;
+        newContent = `// Swancord\n${patchLine}\n\n${content}`;
     }
 
     writeFileSync(indexFile, newContent, "utf-8");
 }
 
-async function uninstall(discordInstall) {
+function unpatchDiscord(discordInstall) {
     const indexFile = join(discordInstall.coreDir, "index.js");
     if (!existsSync(indexFile)) throw new Error("index.js not found");
-
     let content = readFileSync(indexFile, "utf-8");
     content = content
         .replace(/\/\/ Swancord\n/, "")
         .replace(/require\(".*patcher\.js"\);\n\n?/, "");
     writeFileSync(indexFile, content, "utf-8");
-}
-
-// ─── CHECK EXISTING ────────────────────────────────────────────────────────
-function isInstalled(discordInstall) {
-    const indexFile = join(discordInstall.coreDir, "index.js");
-    if (!existsSync(indexFile)) return false;
-    const content = readFileSync(indexFile, "utf-8");
-    return content.includes("// Swancord") || content.includes("patcher.js");
 }
 
 // ─── MAIN ──────────────────────────────────────────────────────────────────
@@ -207,9 +192,9 @@ async function main() {
     print(c.white("  What would you like to do?"));
     print();
     const action = await pickFromList([
-        { label: "Install Swancord",   sub: "Patch a Discord installation" },
-        { label: "Uninstall Swancord", sub: "Remove the Swancord patch" },
-        { label: "Reinstall / Repair", sub: "Re-apply the patch to the same install" },
+        { label: "Install Swancord",   sub: "Download the latest build and patch Discord" },
+        { label: "Uninstall Swancord", sub: "Remove the Swancord patch from Discord" },
+        { label: "Reinstall / Update", sub: "Re-download the latest build and re-apply the patch" },
     ], "Choose an action:");
 
     if (!action) {
@@ -225,7 +210,7 @@ async function main() {
 
     const installs = getDiscordInstalls();
 
-    if (installs.length === 0) {
+    if (!installs.length) {
         print(`  ${c.red("✗")} No Discord installations found.`);
         print(`  ${c.gray("Make sure Discord is installed and has been opened at least once.")}`);
         print();
@@ -233,10 +218,8 @@ async function main() {
         return;
     }
 
-    // Mark already-installed ones
     installs.forEach(i => {
-        const already = isInstalled(i);
-        i.label = `${i.name}${already ? c.green("  [Swancord installed]") : ""}`;
+        if (isInstalled(i)) i.label = `${i.name}${c.green("  [Swancord installed]")}`;
     });
 
     print(c.white("  Select a Discord installation:"));
@@ -255,34 +238,28 @@ async function main() {
     if (action.label.startsWith("Uninstall")) {
         startSpinner("Removing Swancord patch…");
         try {
-            await uninstall(chosen);
+            unpatchDiscord(chosen);
             stopSpinner(true, "Swancord patch removed successfully.");
         } catch (err) {
             stopSpinner(false, `Failed: ${err.message}`);
         }
     } else {
-        // Build check
-        const distDir = join(__dirname, "dist");
-        if (!existsSync(join(distDir, "patcher.js"))) {
-            print(`  ${c.yellow("⚠")}  dist/patcher.js not found. Building Swancord first...`);
+        startSpinner("Downloading latest Swancord build…");
+        let swancordDir;
+        try {
+            swancordDir = await downloadLatest();
+            stopSpinner(true, `Downloaded to ${swancordDir}`);
+        } catch (err) {
+            stopSpinner(false, `Download failed: ${err.message}`);
             print();
-            startSpinner("Building Swancord…");
-            try {
-                spawnSync("node", ["scripts/build/build.mjs"], {
-                    cwd: __dirname,
-                    stdio: "pipe",
-                });
-                stopSpinner(true, "Build complete.");
-            } catch (err) {
-                stopSpinner(false, `Build failed: ${err.message}`);
-                rl.close();
-                return;
-            }
+            print(`  ${c.yellow("!")} Make sure you have an internet connection and try again.`);
+            rl.close();
+            return;
         }
 
         startSpinner("Patching Discord…");
         try {
-            await install(chosen);
+            patchDiscord(chosen, swancordDir);
             stopSpinner(true, `${chosen.name} patched successfully.`);
         } catch (err) {
             stopSpinner(false, `Failed: ${err.message}`);
@@ -295,12 +272,13 @@ async function main() {
     print(c.gray("  ─────────────────────────────────────────────────────────────────────"));
     print();
 
-    if (!action.label.startsWith("Uninstall")) {
+    if (action.label.startsWith("Uninstall")) {
+        print(`  ${c.green("✓")}  ${Bold("Swancord removed.")} Restart Discord to apply.`);
+    } else {
         print(`  ${c.green("✓")}  ${Bold("Swancord installed!")} Restart Discord to apply.`);
         print();
         print(`  ${c.gray("Tip:")} Open Discord Settings → Swancord to configure plugins and themes.`);
-    } else {
-        print(`  ${c.green("✓")}  ${Bold("Swancord removed.")} Restart Discord to apply.`);
+        print(`  ${c.gray("Tip:")} Run this installer again and choose Reinstall / Update to get the latest.`);
     }
 
     print();

@@ -17,8 +17,8 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PlaceholderIcon, PluginsIcon, UpdaterIcon, VesktopSettingsIcon } from "@components/Icons";
-import { BackupAndRestoreTab, PatchHelperTab, PluginsTab, ThemesTab, UpdaterTab, SwancordTab } from "@components/settings/tabs";
+import { BackupRestoreIcon, InfoIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PlaceholderIcon, PluginsIcon, UpdaterIcon, VesktopSettingsIcon } from "@components/Icons";
+import { BackupAndRestoreTab, PatchHelperTab, PluginsTab, ThemesTab, UpdaterTab, SwancordTab, InfoTab } from "@components/settings/tabs";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
@@ -96,6 +96,7 @@ const settingsSectionMap: [string, string][] = [
     ["SwancordPlugins", "swancord_plugins_panel"],
     ["SwancordThemes", "swancord_themes_panel"],
     ["SwancordUpdater", "swancord_updater_panel"],
+    ["SwancordInfo", "swancord_info_panel"],
     ["SwancordBackupAndRestore", "swancord_backup_restore_panel"],
     ["SwancordPatchHelper", "swancord_patch_helper_panel"]
 ];
@@ -232,6 +233,12 @@ export default definePlugin({
                 title: "Themes",
                 Component: ThemesTab,
                 Icon: PaintbrushIcon
+            }),
+            buildEntry({
+                key: "swancord_info",
+                title: "Info",
+                Component: InfoTab,
+                Icon: InfoIcon
             }),
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
                 key: "swancord_updater",

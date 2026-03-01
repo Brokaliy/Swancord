@@ -22,9 +22,10 @@ import { Devs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Text } from "@webpack/common";
+import gitHash from "~git-hash";
 
 const CHANGELOG_URL = "https://7n7.dev/swancord/changelog.json";
-const DATASTORE_KEY = "SwancordChangelog_lastSeen";
+const DATASTORE_KEY = "SwancordChangelog_lastHash";
 
 interface ChangelogEntry {
     version: string;
@@ -80,23 +81,25 @@ export default definePlugin({
 
     async start() {
         try {
+            const lastHash = await DataStore.get(DATASTORE_KEY);
+
+            // First install — silently record hash, don't show changelog
+            if (!lastHash) {
+                await DataStore.set(DATASTORE_KEY, gitHash);
+                return;
+            }
+
+            // No update — same build hash as last time
+            if (lastHash === gitHash) return;
+
+            // User just installed an update — record new hash and show changelog
+            await DataStore.set(DATASTORE_KEY, gitHash);
+
             const res = await fetch(CHANGELOG_URL);
             if (!res.ok) return;
 
             const entries: ChangelogEntry[] = await res.json();
             if (!entries.length) return;
-
-            const latest = entries[0].version;
-            const lastSeen = await DataStore.get(DATASTORE_KEY);
-            if (lastSeen === latest) return;
-
-            // First install — silently record version, don't show changelog
-            if (!lastSeen) {
-                await DataStore.set(DATASTORE_KEY, latest);
-                return;
-            }
-
-            await DataStore.set(DATASTORE_KEY, latest);
 
             const openChangelogModal = () => openModal(props => (
                 <ChangelogModal modalProps={props} entries={entries.slice(0, 3)} />
