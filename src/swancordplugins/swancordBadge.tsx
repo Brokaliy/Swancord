@@ -18,7 +18,6 @@
 
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
-import { shouldShowContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
 
 // Hardcoded IDs that get the "Swancord" badge.
@@ -90,10 +89,18 @@ const BugHunterBadge: ProfileBadge = {
     onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
-// Contributor badge — shown to Swancord plugin authors
+// Swancord contributor IDs — add plugin authors here (NOT the Vencord upstream list)
+const SWANCORD_CONTRIBUTORS = new Set<string>([
+    "320171386016628747",  // 7n7
+    "1149839746588229754", // ujc2
+]);
+
+const CONTRIBUTOR_BADGE_ICON = "https://7n7.dev/badges/ContributorBadgeIcon.png";
+
+// Contributor badge — only shown to actual Swancord plugin authors
 const ContributorBadge: ProfileBadge = {
     description: "Swancord Contributor",
-    iconSrc: "swancord:///assets/SwancordIcon.png",
+    iconSrc: CONTRIBUTOR_BADGE_ICON,
     position: BadgePosition.START,
     props: {
         style: {
@@ -101,7 +108,7 @@ const ContributorBadge: ProfileBadge = {
             transform: "scale(0.9)",
         },
     },
-    shouldShow: ({ userId }) => shouldShowContributorBadge(userId),
+    shouldShow: ({ userId }) => SWANCORD_CONTRIBUTORS.has(userId),
     onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
