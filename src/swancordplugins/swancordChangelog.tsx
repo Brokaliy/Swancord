@@ -17,9 +17,10 @@
 */
 
 import * as DataStore from "@api/DataStore";
+import { showNotification } from "@api/Notifications";
 import { Devs } from "@utils/constants";
-import definePlugin from "@utils/types";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
+import definePlugin from "@utils/types";
 import { Text } from "@webpack/common";
 
 const CHANGELOG_URL = "https://7n7.dev/swancord/changelog.json";
@@ -91,12 +92,23 @@ export default definePlugin({
 
             await DataStore.set(DATASTORE_KEY, latest);
 
-            // Small delay so Discord finishes loading before the modal appears
+            const openChangelogModal = () => openModal(props => (
+                <ChangelogModal modalProps={props} entries={entries.slice(0, 3)} />
+            ));
+
+            // Notification fires first so users see it even if they dismiss the modal
             setTimeout(() => {
-                openModal(props => (
-                    <ChangelogModal modalProps={props} entries={entries.slice(0, 3)} />
-                ));
-            }, 3000);
+                showNotification({
+                    title: "Swancord Updated!",
+                    body: entries[0].title,
+                    icon: "https://7n7.dev/badges/CreatorBadge.png",
+                    onClick: openChangelogModal,
+                    noPersist: true,
+                });
+            }, 2000);
+
+            // Modal opens a second later
+            setTimeout(openChangelogModal, 3000);
         } catch {
             // silently fail — changelog is optional
         }

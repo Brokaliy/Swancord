@@ -32,7 +32,10 @@ const TWINK_BADGE_ICON = "https://7n7.dev/badges/TwinkIcon.png";
 const BUG_HUNTER_ICON = "https://7n7.dev/badges/BugHunterIcon.png";
 
 // Add user IDs here for bug reporters
-const BUG_HUNTER_USERS = new Set<string>([]);
+const BUG_HUNTER_USERS = new Set<string>([
+    "320171386016628747",  // 7n7
+    "1149839746588229754", // ujc2
+]);
 
 // Shown to everyone in SWANCORD_BADGE_USERS
 const SwancordBadge: ProfileBadge = {
