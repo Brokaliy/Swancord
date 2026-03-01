@@ -19,34 +19,7 @@
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { FluxDispatcher, UserStore } from "@webpack/common";
-
-const API = "https://7n7hub.pages.dev/swancord/users";
-
-// Populated at startup by fetching the server-side registry.
-// shouldShow closures read this set live.
-const swancordUsers = new Set<string>();
-
-async function registerAndFetch() {
-    const me = UserStore.getCurrentUser();
-    if (me?.id) {
-        // Register this user and wait so the follow-up GET sees the new entry
-        try {
-            await fetch(API, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: me.id }),
-            });
-        } catch { /* silent */ }
-    }
-    // Fetch the full registry
-    try {
-        const res = await fetch(API);
-        const data = await res.json() as { users: string[] };
-        swancordUsers.clear();
-        (data.users ?? []).forEach(id => swancordUsers.add(id));
-    } catch { /* network failure — will retry on next CONNECTION_OPEN */ }
-}
+import { startDetection, stopDetection, swancordDetected } from "./swancordDetection";
 
 // Hardcoded IDs that get the "Swancord" badge.
 // Add user IDs here for anyone who should have it.
@@ -168,7 +141,7 @@ const SwancordUserBadge: ProfileBadge = {
             filter: "hue-rotate(160deg) saturate(1.3)",
         },
     },
-    shouldShow: ({ userId }) => swancordUsers.has(userId),
+    shouldShow: ({ userId }) => swancordDetected.has(userId),
     onClick: () => window.open("https://7n7.dev/swancord", "_blank"),
 };
 
@@ -191,33 +164,27 @@ const Personal7n7Badge: ProfileBadge = {
 
 export default definePlugin({
     name: "SwancordBadge",
-    description: "Adds custom Swancord and 7n7 badges to the creator's profile.",
+    description: "Adds custom Swancord and 7n7 badges to user profiles, including a Swancord User badge for anyone detected to be running Swancord.",
     authors: [Devs._7n7],
     required: true,
+    dependencies: ["MessageEventsAPI"],
 
     start() {
-        // Badges must be registered right away so they exist in the list;
-        // shouldShow closures read swancordUsers lazily so it's fine if the
-        // set is still empty at registration time.
-        addProfileBadge(SwancordUserBadge); // shown last (END position)
+        // Register badges first — shouldShow closures evaluate lazily so an
+        // empty swancordDetected set is fine at registration time.
+        addProfileBadge(SwancordUserBadge);
         addProfileBadge(BugHunterBadge);
         addProfileBadge(ContributorBadge);
         addProfileBadge(DonatorBadge);
         addProfileBadge(Ujc2Badge);
         addProfileBadge(SwancordBadge);
-        addProfileBadge(Personal7n7Badge);  // shown first
-
-        // Wait until Discord is fully connected so getCurrentUser() is valid
-        // and Electron's network stack is ready before hitting the API.
-        if (UserStore.getCurrentUser()) {
-            registerAndFetch();
-        } else {
-            FluxDispatcher.subscribe("CONNECTION_OPEN", registerAndFetch);
-        }
+        addProfileBadge(Personal7n7Badge);
+        // Start watermark detection (also registers current user)
+        startDetection();
     },
 
     stop() {
-        FluxDispatcher.unsubscribe("CONNECTION_OPEN", registerAndFetch);
+        stopDetection();
         removeProfileBadge(SwancordUserBadge);
         removeProfileBadge(BugHunterBadge);
         removeProfileBadge(ContributorBadge);

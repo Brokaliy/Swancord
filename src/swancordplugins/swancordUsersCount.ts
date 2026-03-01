@@ -6,38 +6,23 @@
 
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { FluxDispatcher, PresenceStore, UserStore } from "@webpack/common";
+import { FluxDispatcher, PresenceStore } from "@webpack/common";
+import { startDetection, stopDetection, swancordDetected } from "./swancordDetection";
 
-const API      = "https://7n7hub.pages.dev/swancord/users";
 const EL_ID    = "sc-swc-count";
 const STYLE_ID = "sc-swc-count-style";
 
-let totalUsers  = 0;
-let onlineUsers = 0;
-const swancordIds = new Set<string>();
-
-async function fetchRegistry() {
-    try {
-        const res  = await fetch(API);
-        const data = await res.json() as { users: string[] };
-        swancordIds.clear();
-        (data.users ?? []).forEach(id => swancordIds.add(id));
-        totalUsers = swancordIds.size;
-        recount();
-    } catch { /* silent */ }
-}
+// ── DOM widget ────────────────────────────────────────────────────────────
 
 function recount() {
-    totalUsers = swancordIds.size;
-    onlineUsers = 0;
-    swancordIds.forEach(id => {
+    const total  = swancordDetected.size;
+    let online = 0;
+    swancordDetected.forEach(id => {
         const s = PresenceStore.getStatus(id);
-        if (s === "online" || s === "idle" || s === "dnd") onlineUsers++;
+        if (s === "online" || s === "idle" || s === "dnd") online++;
     });
-    updateWidget();
+    updateWidget(total, online);
 }
-
-// ── DOM widget ────────────────────────────────────────────────────────────
 
 function getOrCreateWidget(): HTMLElement {
     let el = document.getElementById(EL_ID);
@@ -49,7 +34,7 @@ function getOrCreateWidget(): HTMLElement {
     return el;
 }
 
-function updateWidget() {
+function updateWidget(total = swancordDetected.size, online = 0) {
     const el = getOrCreateWidget();
 
     // Only show when the friends/people page is open
@@ -61,9 +46,9 @@ function updateWidget() {
         <span class="sc-sc-icon">🦢</span>
         <span class="sc-sc-label">Swancord Users</span>
         <span class="sc-sc-counts">
-            <span class="sc-sc-online">${onlineUsers} online</span>
+            <span class="sc-sc-online">${online} online</span>
             <span class="sc-sc-sep">·</span>
-            <span class="sc-sc-total">${totalUsers} total</span>
+            <span class="sc-sc-total">${total} total</span>
         </span>
     `;
 }
@@ -73,7 +58,6 @@ function removeWidget() {
 }
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
-let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
 function startObserver() {
     if (pollInterval) return;
@@ -125,33 +109,24 @@ function injectStyle() {
 
 export default definePlugin({
     name: "SwancordUsersCount",
-    description: "Shows a live count of all Swancord users (and how many are online) at the top of the Friends page.",
+    description: "Shows a live count of all Swancord users (and how many are online) at the top of the Friends page. Detects Swancord users via an invisible message watermark.",
     authors: [Devs._7n7],
     required: true,
+    dependencies: ["MessageEventsAPI"],
 
-    async start() {
+    start() {
         injectStyle();
+        startDetection();      // also handles self-registration
         startObserver();
         FluxDispatcher.subscribe("PRESENCE_UPDATES", recount);
-
-        // Fetch immediately if already connected, otherwise wait for auth
-        if (UserStore.getCurrentUser()) {
-            await fetchRegistry();
-        } else {
-            FluxDispatcher.subscribe("CONNECTION_OPEN", fetchRegistry);
-        }
-
-        // Re-fetch registry every 60 s to pick up newly registered users
-        refreshInterval = setInterval(fetchRegistry, 60_000);
+        recount();             // initial render with current data
     },
 
     stop() {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-        if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
-        FluxDispatcher.unsubscribe("CONNECTION_OPEN", fetchRegistry);
+        stopDetection();
         FluxDispatcher.unsubscribe("PRESENCE_UPDATES", recount);
         removeWidget();
         document.getElementById(STYLE_ID)?.remove();
-        swancordIds.clear();
     },
 });
