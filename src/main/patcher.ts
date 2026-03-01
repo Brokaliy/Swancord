@@ -25,16 +25,25 @@ import { IS_VANILLA } from "./utils/constants";
 
 console.log("[Swancord] Starting up...");
 
-// Our injector file at app/index.js
+// Our injector file at app/index.js (old) or app.asar/app_bootstrap/index.js (new)
 const injectorPath = require.main!.filename;
 
 // special discord_arch_electron injection method
 const asarName = require.main!.path.endsWith("app.asar") ? "_app.asar" : "app.asar";
 
-// The original app.asar
-const asarPath = join(dirname(injectorPath), "..", asarName);
+// The original app.asar — handle both old (app/index.js outside asar) and
+// new (app.asar/app_bootstrap/index.js inside asar) Discord load paths
+const asarPath = injectorPath.includes(".asar")
+    ? join(dirname(injectorPath), "..") // inside asar: go up to asar root
+    : join(dirname(injectorPath), "..", asarName); // outside asar: classic path
 
-const discordPkg = require(join(asarPath, "package.json"));
+// Newer Discord versions removed the root package.json from app.asar
+let discordPkg: { main: string };
+try {
+    discordPkg = require(join(asarPath, "package.json"));
+} catch {
+    discordPkg = { main: "app_bootstrap/index.js" };
+}
 require.main!.filename = join(asarPath, discordPkg.main);
 
 // @ts-expect-error Untyped method? Dies from cringe

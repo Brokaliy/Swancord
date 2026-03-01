@@ -1,42 +1,48 @@
 # Swancord
 
-The best Discord client mod
+A Discord modification by 7n7, built on top of Vencord.
+
+![Swancord](https://raw.githubusercontent.com/Brokaliy/Swancord/main/dist/assets/SwancordIcon.png)
 
 ## Features
 
--   Easy to install
--   [100+ built in plugins](https://swancord.dev/plugins)
--   Fairly lightweight despite the many inbuilt plugins
--   Excellent Browser Support: Run Swancord in your Browser via extension or UserScript
--   Works on any Discord branch: Stable, Canary or PTB all work
--   Custom CSS and Themes: Inbuilt css editor with support to import any css files (including BetterDiscord themes)
--   Privacy friendly: blocks Discord analytics & crash reporting out of the box and has no telemetry
--   Maintained very actively, broken plugins are usually fixed within 12 hours
--   Settings sync: Keep your plugins and their settings synchronised between devices / apps (optional)
-
+- Easy to install via the Swancord Installer
+- 100+ built-in plugins (62 upstream Vencord + 38 Swancord-exclusive)
+- Bundled themes — 7n7 Dark ships with a live particle network animation
+- Custom branding, settings UI, and contributor cards
+- All of Vencord: browser extension, UserScript, all Discord branches
+- Custom CSS editor with BetterDiscord theme support
+- Privacy-friendly: blocks analytics & crash reporting out of the box
 
 ## Installing / Uninstalling
 
-Visit https://7n7.dev/swancord
+Visit [7n7.dev/swancord](https://7n7.dev/swancord) to download the installer.
 
-## Join our Support/Community Server
+Or build from source:
 
-https://discord.gg/7n7s
+```sh
+git clone https://github.com/Brokaliy/Swancord
+cd Swancord
+pnpm install
+pnpm build
+node installer.mjs
+```
+
+Requires Node 20+ and pnpm.
+
+## Source
+
+[github.com/Brokaliy/Swancord](https://github.com/Brokaliy/Swancord)
 
 ## Disclaimer
 
-Discord is trademark of Discord Inc. and solely mentioned for the sake of descriptivity.
-Mention of it does not imply any affiliation with or endorsement by Discord Inc.
+Discord is a trademark of Discord Inc. and is mentioned solely for descriptive purposes.
 
 <details>
-<summary>Using Swancord violates Discord's terms of service</summary>
+<summary>Using Swancord violates Discord's Terms of Service</summary>
 
-Client modifications are against Discord’s Terms of Service.
+Client modifications are against Discord's Terms of Service. However, Discord is generally indifferent about them and there are no known cases of users being banned for using client mods — as long as you don't use any plugins that implement abusive behaviour. All built-in plugins are safe to use.
 
-However, Discord is pretty indifferent about them and there are no known cases of users getting banned for using client mods! So you should generally be fine as long as you don’t use any plugins that implement abusive behaviour. But no worries, all inbuilt plugins are safe to use!
-
-Regardless, if your account is very important to you and it getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Swancord), just to be safe
-
-Additionally, make sure not to post screenshots with Swancord in a server where you might get banned for it
+If your account is very important to you, you should probably avoid all client mods to be safe.
 
 </details>
