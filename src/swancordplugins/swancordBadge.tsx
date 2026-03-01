@@ -18,6 +18,7 @@
 
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
+import { shouldShowContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
 
 // Hardcoded IDs that get the "Swancord" badge.
@@ -30,11 +31,16 @@ const CREATOR_BADGE_ICON = "https://7n7.dev/badges/CreatorBadge.png";
 const PERSONAL_7N7_ICON = "https://7n7.dev/badges/7n7Icon.png";
 const TWINK_BADGE_ICON = "https://7n7.dev/badges/TwinkIcon.png";
 const BUG_HUNTER_ICON = "https://7n7.dev/badges/BugHunterIcon.png";
+const DONATOR_BADGE_ICON = "https://7n7.dev/badges/DonatorBadgeIcon.png";
 
 // Add user IDs here for bug reporters
 const BUG_HUNTER_USERS = new Set<string>([
     "320171386016628747",  // 7n7
     "1149839746588229754", // ujc2
+]);
+
+// Add user IDs here for donors
+const DONATOR_USERS = new Set<string>([
 ]);
 
 // Shown to everyone in SWANCORD_BADGE_USERS
@@ -84,6 +90,36 @@ const BugHunterBadge: ProfileBadge = {
     onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
+// Contributor badge — shown to Swancord plugin authors
+const ContributorBadge: ProfileBadge = {
+    description: "Swancord Contributor",
+    iconSrc: "swancord:///assets/SwancordIcon.png",
+    position: BadgePosition.START,
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)",
+        },
+    },
+    shouldShow: ({ userId }) => shouldShowContributorBadge(userId),
+    onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
+};
+
+// Donator badge — shown to users who donated
+const DonatorBadge: ProfileBadge = {
+    description: "Swancord Donator",
+    iconSrc: DONATOR_BADGE_ICON,
+    position: BadgePosition.START,
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)",
+        },
+    },
+    shouldShow: ({ userId }) => DONATOR_USERS.has(userId),
+    onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
+};
+
 // Personal 7n7 badge — only shown on the creator's profile
 const Personal7n7Badge: ProfileBadge = {
     description: "7n7 — 7n7.dev",
@@ -110,16 +146,20 @@ export default definePlugin({
     start() {
         // Registered in reverse rarity order — BadgePosition.START prepends,
         // so the last registered badge appears first on the profile.
-        addProfileBadge(BugHunterBadge);   // shown last
+        addProfileBadge(BugHunterBadge);    // shown last
+        addProfileBadge(ContributorBadge);  // shown before hunter
+        addProfileBadge(DonatorBadge);      // shown before contributor
         addProfileBadge(Ujc2Badge);         // shown third
-        addProfileBadge(Personal7n7Badge);  // shown second
-        addProfileBadge(SwancordBadge);     // shown first
+        addProfileBadge(SwancordBadge);     // shown second
+        addProfileBadge(Personal7n7Badge);  // shown first
     },
 
     stop() {
         removeProfileBadge(BugHunterBadge);
+        removeProfileBadge(ContributorBadge);
+        removeProfileBadge(DonatorBadge);
         removeProfileBadge(Ujc2Badge);
-        removeProfileBadge(Personal7n7Badge);
         removeProfileBadge(SwancordBadge);
+        removeProfileBadge(Personal7n7Badge);
     },
 });

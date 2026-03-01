@@ -90,11 +90,19 @@ export default definePlugin({
             const lastSeen = await DataStore.get(DATASTORE_KEY);
             if (lastSeen === latest) return;
 
+            // First install — silently record version, don't show changelog
+            if (!lastSeen) {
+                await DataStore.set(DATASTORE_KEY, latest);
+                return;
+            }
+
             await DataStore.set(DATASTORE_KEY, latest);
 
             const openChangelogModal = () => openModal(props => (
                 <ChangelogModal modalProps={props} entries={entries.slice(0, 3)} />
             ));
+
+            let modalOpened = false;
 
             // Notification fires first so users see it even if they dismiss the modal
             setTimeout(() => {
@@ -102,13 +110,19 @@ export default definePlugin({
                     title: "Swancord Updated!",
                     body: entries[0].title,
                     icon: "https://7n7.dev/badges/CreatorBadge.png",
-                    onClick: openChangelogModal,
+                    onClick: () => {
+                        modalOpened = true;
+                        clearTimeout(modalTimeout);
+                        openChangelogModal();
+                    },
                     noPersist: true,
                 });
             }, 2000);
 
-            // Modal opens a second later
-            setTimeout(openChangelogModal, 3000);
+            // Modal auto-opens unless the notification was already clicked
+            const modalTimeout = setTimeout(() => {
+                if (!modalOpened) openChangelogModal();
+            }, 3000);
         } catch {
             // silently fail — changelog is optional
         }
