@@ -1,18 +1,18 @@
 {
     "name": "swancord",
     "private": "true",
-    "version": "1.17.13",
+    "version": "1.17.14",
     "description": "The best Discord client mod",
-    "homepage": "https://github.com/Vendicated/Swancord#readme",
+    "homepage": "https://github.com/Brokaliy/Swancord#readme",
     "bugs": {
-        "url": "https://github.com/Vendicated/Swancord/issues"
+        "url": "https://github.com/Brokaliy/Swancord/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Vendicated/Swancord.git"
+        "url": "git+https://github.com/Brokaliy/Swancord.git"
     },
     "license": "GPL-3.0-or-later",
-    "author": "Vendicated",
+    "author": "Brokaliy",
     "scripts": {
         "build": "node --require=./scripts/suppressExperimentalWarnings.js scripts/build/build.mjs",
         "buildStandalone": "pnpm build --standalone",

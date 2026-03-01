@@ -95,7 +95,7 @@ const SWANCORD_CONTRIBUTORS = new Set<string>([
     "1149839746588229754", // ujc2
 ]);
 
-const CONTRIBUTOR_BADGE_ICON = "https://7n7.dev/badges/ContributorBadgeIcon.png";
+const CONTRIBUTOR_BADGE_ICON = "https://7n7.dev/badges/SwancordIcon.png";
 
 // Contributor badge — only shown to actual Swancord plugin authors
 const ContributorBadge: ProfileBadge = {
