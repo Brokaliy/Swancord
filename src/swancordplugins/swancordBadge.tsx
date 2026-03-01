@@ -29,6 +29,10 @@ const SWANCORD_BADGE_USERS = new Set<string>([
 const CREATOR_BADGE_ICON = "https://7n7.dev/badges/CreatorBadge.png";
 const PERSONAL_7N7_ICON = "https://7n7.dev/badges/7n7Icon.png";
 const TWINK_BADGE_ICON = "https://7n7.dev/badges/TwinkIcon.png";
+const BUG_HUNTER_ICON = "https://7n7.dev/badges/BugHunterIcon.png";
+
+// Add user IDs here for bug reporters
+const BUG_HUNTER_USERS = new Set<string>([]);
 
 // Shown to everyone in SWANCORD_BADGE_USERS
 const SwancordBadge: ProfileBadge = {
@@ -61,6 +65,20 @@ const Ujc2Badge: ProfileBadge = {
     shouldShow: ({ userId }) => userId === "1149839746588229754",
 };
 
+// Bug hunter badge — shown to users who reported bugs
+const BugHunterBadge: ProfileBadge = {
+    description: "Swancord Hunter",
+    iconSrc: BUG_HUNTER_ICON,
+    position: BadgePosition.START,
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)",
+        },
+    },
+    shouldShow: ({ userId }) => BUG_HUNTER_USERS.has(userId),
+};
+
 // Personal 7n7 badge — only shown on the creator's profile
 const Personal7n7Badge: ProfileBadge = {
     description: "7n7 — 7n7.dev",
@@ -88,11 +106,13 @@ export default definePlugin({
         addProfileBadge(SwancordBadge);
         addProfileBadge(Personal7n7Badge);
         addProfileBadge(Ujc2Badge);
+        addProfileBadge(BugHunterBadge);
     },
 
     stop() {
         removeProfileBadge(SwancordBadge);
         removeProfileBadge(Personal7n7Badge);
         removeProfileBadge(Ujc2Badge);
+        removeProfileBadge(BugHunterBadge);
     },
 });
