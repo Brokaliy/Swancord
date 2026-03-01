@@ -58,13 +58,19 @@ function InfoCard({
 }
 
 function InfoTab() {
-    const [latest, setLatest] = React.useState<string>("Loading…");
+    const [latest, setLatest] = React.useState<string>("…");
 
     React.useEffect(() => {
         let alive = true;
         getLatestSwancordVersion()
-            .then(v => alive && setLatest(v))
+            .then(v => {
+                if (!alive) return;
+                // If your util returns empty/unknown, keep it readable
+                const safe = (v && v.trim().length) ? v : "Unknown";
+                setLatest(safe);
+            })
             .catch(() => alive && setLatest("Unknown"));
+
         return () => { alive = false; };
     }, []);
 
@@ -84,8 +90,12 @@ function InfoTab() {
                 subtitle="Swancord is a custom Discord client extension focused on customization, performance tweaks, and developer-level control."
             >
                 <div style={{ display: "grid", gap: 6 }}>
+                    {/* ✅ Latest version from website/GitHub util */}
                     <div><b>Version (Latest):</b> {latest}</div>
+
+                    {/* ✅ Installed build hash/devbuild stays separate */}
                     <div><b>Installed Build:</b> {installedBuild}</div>
+
                     <div><b>Channel:</b> Stable</div>
                     <div><b>Runtime:</b> Production</div>
                 </div>
@@ -107,7 +117,7 @@ function InfoTab() {
                     <QuickAction
                         Icon={LogIcon}
                         text="View Changelog"
-                        action={() => openExternal("https://7n7.dev/swancord#changelog")}
+                        action={() => openExternal("https://7n7.dev/swancord/changelog")}
                     />
                     <QuickAction
                         Icon={PaintbrushIcon}
