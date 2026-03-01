@@ -7,7 +7,7 @@
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, PresenceStore } from "@webpack/common";
-import { startDetection, stopDetection, swancordDetected } from "./swancordDetection";
+import { startDetection, stopDetection, swancordDetected } from "@utils/swancordDetection";
 
 const EL_ID    = "sc-swc-count";
 const STYLE_ID = "sc-swc-count-style";

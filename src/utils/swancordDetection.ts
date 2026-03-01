@@ -16,7 +16,7 @@ import { addMessagePreEditListener, addMessagePreSendListener, removeMessagePreE
 import type { MessageEditListener, MessageSendListener } from "@api/MessageEvents";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
-// ── Watermark ── ─────────────────────────────────────────────────────────────
+// ── Watermark ─────────────────────────────────────────────────────────────────
 // Six invisible Unicode characters: ZWSP · ZWNJ · ZWJ · WJ · ZWNJ · ZWSP
 // The specific combination is unique to Swancord and undetectable to the eye.
 export const WATERMARK = "\u200b\u200c\u200d\u2060\u200c\u200b";

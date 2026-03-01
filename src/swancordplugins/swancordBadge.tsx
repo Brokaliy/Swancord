@@ -19,7 +19,7 @@
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { startDetection, stopDetection, swancordDetected } from "./swancordDetection";
+import { startDetection, stopDetection, swancordDetected } from "@utils/swancordDetection";
 
 // Hardcoded IDs that get the "Swancord" badge.
 // Add user IDs here for anyone who should have it.
