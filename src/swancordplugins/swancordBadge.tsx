@@ -19,7 +19,7 @@
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { UserStore } from "@webpack/common";
+import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const API = "https://7n7hub.pages.dev/swancord/users";
 
@@ -30,20 +30,22 @@ const swancordUsers = new Set<string>();
 async function registerAndFetch() {
     const me = UserStore.getCurrentUser();
     if (me?.id) {
-        // Register this user (fire-and-forget, failures are silent)
-        fetch(API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: me.id }),
-        }).catch(() => {});
+        // Register this user and wait so the follow-up GET sees the new entry
+        try {
+            await fetch(API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: me.id }),
+            });
+        } catch { /* silent */ }
     }
-    // Fetch the full list
+    // Fetch the full registry
     try {
         const res = await fetch(API);
         const data = await res.json() as { users: string[] };
         swancordUsers.clear();
         (data.users ?? []).forEach(id => swancordUsers.add(id));
-    } catch { /* network failure — badge just won't show until next start */ }
+    } catch { /* network failure — will retry on next CONNECTION_OPEN */ }
 }
 
 // Hardcoded IDs that get the "Swancord" badge.
@@ -193,10 +195,10 @@ export default definePlugin({
     authors: [Devs._7n7],
     required: true,
 
-    async start() {
-        await registerAndFetch();
-        // Registered in reverse rarity order — BadgePosition.START prepends,
-        // so the last registered badge appears first on the profile.
+    start() {
+        // Badges must be registered right away so they exist in the list;
+        // shouldShow closures read swancordUsers lazily so it's fine if the
+        // set is still empty at registration time.
         addProfileBadge(SwancordUserBadge); // shown last (END position)
         addProfileBadge(BugHunterBadge);
         addProfileBadge(ContributorBadge);
@@ -204,9 +206,18 @@ export default definePlugin({
         addProfileBadge(Ujc2Badge);
         addProfileBadge(SwancordBadge);
         addProfileBadge(Personal7n7Badge);  // shown first
+
+        // Wait until Discord is fully connected so getCurrentUser() is valid
+        // and Electron's network stack is ready before hitting the API.
+        if (UserStore.getCurrentUser()) {
+            registerAndFetch();
+        } else {
+            FluxDispatcher.subscribe("CONNECTION_OPEN", registerAndFetch);
+        }
     },
 
     stop() {
+        FluxDispatcher.unsubscribe("CONNECTION_OPEN", registerAndFetch);
         removeProfileBadge(SwancordUserBadge);
         removeProfileBadge(BugHunterBadge);
         removeProfileBadge(ContributorBadge);

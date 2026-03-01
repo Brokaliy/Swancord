@@ -6,7 +6,7 @@
 
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { FluxDispatcher, PresenceStore } from "@webpack/common";
+import { FluxDispatcher, PresenceStore, UserStore } from "@webpack/common";
 
 const API      = "https://7n7hub.pages.dev/swancord/users";
 const EL_ID    = "sc-swc-count";
@@ -73,6 +73,7 @@ function removeWidget() {
 }
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
 function startObserver() {
     if (pollInterval) return;
@@ -130,13 +131,24 @@ export default definePlugin({
 
     async start() {
         injectStyle();
-        await fetchRegistry();
         startObserver();
         FluxDispatcher.subscribe("PRESENCE_UPDATES", recount);
+
+        // Fetch immediately if already connected, otherwise wait for auth
+        if (UserStore.getCurrentUser()) {
+            await fetchRegistry();
+        } else {
+            FluxDispatcher.subscribe("CONNECTION_OPEN", fetchRegistry);
+        }
+
+        // Re-fetch registry every 60 s to pick up newly registered users
+        refreshInterval = setInterval(fetchRegistry, 60_000);
     },
 
     stop() {
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+        FluxDispatcher.unsubscribe("CONNECTION_OPEN", fetchRegistry);
         FluxDispatcher.unsubscribe("PRESENCE_UPDATES", recount);
         removeWidget();
         document.getElementById(STYLE_ID)?.remove();
