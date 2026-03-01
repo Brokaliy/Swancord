@@ -24,20 +24,60 @@ const MAX_ZOOM = 3.0;
 const STEP = 0.1;
 
 let zoom = 1;
+let indicator: HTMLDivElement | null = null;
+let hideTimeout: ReturnType<typeof setTimeout> | null = null;
 let wheelHandler: (e: WheelEvent) => void;
 let keyHandler: (e: KeyboardEvent) => void;
 
+function createIndicator() {
+    indicator = document.createElement("div");
+    indicator.id = "vc-discord-zoom-indicator";
+    Object.assign(indicator.style, {
+        position: "fixed",
+        bottom: "24px",
+        right: "24px",
+        zIndex: "99999",
+        background: "var(--background-floating, #18191c)",
+        color: "var(--text-normal, #dcddde)",
+        border: "1px solid var(--background-modifier-accent, rgba(255,255,255,0.08))",
+        borderRadius: "8px",
+        padding: "6px 14px",
+        fontSize: "13px",
+        fontWeight: "600",
+        fontFamily: "var(--font-display, 'gg sans', sans-serif)",
+        letterSpacing: "0.01em",
+        pointerEvents: "none",
+        userSelect: "none",
+        opacity: "0",
+        transition: "opacity 0.15s ease",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+    });
+    document.body.appendChild(indicator);
+}
+
+function showIndicator() {
+    if (!indicator) return;
+    indicator.textContent = `${Math.round(zoom * 100)}%`;
+    indicator.style.opacity = "1";
+    if (hideTimeout) clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+        if (indicator) indicator.style.opacity = "0";
+    }, 1200);
+}
+
 function applyZoom() {
     document.documentElement.style.zoom = String(Math.round(zoom * 100) / 100);
+    showIndicator();
 }
 
 export default definePlugin({
     name: "DiscordZoom",
-    description: "Zoom in/out with Ctrl+Scroll. Ctrl+0 resets. Great for screenshots.",
+    description: "Zoom in/out with Ctrl+Scroll. Ctrl+0 resets. Shows zoom % in the corner.",
     authors: [Devs._7n7],
 
     start() {
         zoom = 1;
+        createIndicator();
 
         wheelHandler = (e: WheelEvent) => {
             if (!e.ctrlKey) return;
@@ -62,6 +102,9 @@ export default definePlugin({
     stop() {
         window.removeEventListener("wheel", wheelHandler, { capture: true });
         window.removeEventListener("keydown", keyHandler);
+        if (hideTimeout) clearTimeout(hideTimeout);
+        indicator?.remove();
+        indicator = null;
         document.documentElement.style.zoom = "";
     },
 });
