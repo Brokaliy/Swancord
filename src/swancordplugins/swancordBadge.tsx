@@ -21,7 +21,7 @@ import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { UserStore } from "@webpack/common";
 
-const API = "https://7n7.dev/swancord/users";
+const API = "https://7n7hub.pages.dev/swancord/users";
 
 // Populated at startup by fetching the server-side registry.
 // shouldShow closures read this set live.
