@@ -19,7 +19,8 @@
 import * as DataStore from "@api/DataStore";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal, Text } from "@webpack/common";
+import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
+import { Text } from "@webpack/common";
 
 const CHANGELOG_URL = "https://7n7.dev/swancord/changelog.json";
 const DATASTORE_KEY = "SwancordChangelog_lastSeen";
