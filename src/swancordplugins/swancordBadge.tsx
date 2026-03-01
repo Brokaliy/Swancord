@@ -108,16 +108,18 @@ export default definePlugin({
     required: true,
 
     start() {
-        addProfileBadge(SwancordBadge);
-        addProfileBadge(Personal7n7Badge);
-        addProfileBadge(Ujc2Badge);
-        addProfileBadge(BugHunterBadge);
+        // Registered in reverse rarity order — BadgePosition.START prepends,
+        // so the last registered badge appears first on the profile.
+        addProfileBadge(BugHunterBadge);   // shown last
+        addProfileBadge(Ujc2Badge);         // shown third
+        addProfileBadge(Personal7n7Badge);  // shown second
+        addProfileBadge(SwancordBadge);     // shown first
     },
 
     stop() {
-        removeProfileBadge(SwancordBadge);
-        removeProfileBadge(Personal7n7Badge);
-        removeProfileBadge(Ujc2Badge);
         removeProfileBadge(BugHunterBadge);
+        removeProfileBadge(Ujc2Badge);
+        removeProfileBadge(Personal7n7Badge);
+        removeProfileBadge(SwancordBadge);
     },
 });
