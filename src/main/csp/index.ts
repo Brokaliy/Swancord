@@ -56,6 +56,7 @@ export const CspPolicies: PolicyMap = {
     "ws.audioscrobbler.com": ConnectSrc, // Last.fm API
     "translate-pa.googleapis.com": ConnectSrc, // Google Translate API
     "*.swancord.dev": ImageSrc, // VenCloud (api.swancord.dev) and Badges (badges.swancord.dev)
+    "7n7.dev": [...ImageSrc, ...ConnectSrc], // 7n7 CDN (badges, banners) and API
     "manti.vendicated.dev": ImageSrc, // ReviewDB API
     "decor.fieryflames.dev": ConnectSrc, // Decor API
     "ugc.decor.fieryflames.dev": ImageSrc, // Decor CDN
