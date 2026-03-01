@@ -21,6 +21,31 @@ import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { UserStore } from "@webpack/common";
 
+const API = "https://7n7.dev/swancord/users";
+
+// Populated at startup by fetching the server-side registry.
+// shouldShow closures read this set live.
+const swancordUsers = new Set<string>();
+
+async function registerAndFetch() {
+    const me = UserStore.getCurrentUser();
+    if (me?.id) {
+        // Register this user (fire-and-forget, failures are silent)
+        fetch(API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: me.id }),
+        }).catch(() => {});
+    }
+    // Fetch the full list
+    try {
+        const res = await fetch(API);
+        const data = await res.json() as { users: string[] };
+        swancordUsers.clear();
+        (data.users ?? []).forEach(id => swancordUsers.add(id));
+    } catch { /* network failure — badge just won't show until next start */ }
+}
+
 // Hardcoded IDs that get the "Swancord" badge.
 // Add user IDs here for anyone who should have it.
 const SWANCORD_BADGE_USERS = new Set<string>([
@@ -128,8 +153,8 @@ const DonatorBadge: ProfileBadge = {
     onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
-// Swancord user badge — shown on your own profile since the badge code
-// only runs inside Swancord; every Swancord user sees this on themselves.
+// Swancord user badge — shown on every user in the server-side registry.
+// Anyone who has launched Swancord at least once is in the list.
 const SwancordUserBadge: ProfileBadge = {
     description: "Swancord User",
     iconSrc: "https://7n7.dev/badges/SwancordIcon.png",
@@ -141,7 +166,7 @@ const SwancordUserBadge: ProfileBadge = {
             filter: "hue-rotate(160deg) saturate(1.3)",
         },
     },
-    shouldShow: ({ userId }) => userId === UserStore.getCurrentUser()?.id,
+    shouldShow: ({ userId }) => swancordUsers.has(userId),
     onClick: () => window.open("https://7n7.dev/swancord", "_blank"),
 };
 
@@ -168,7 +193,8 @@ export default definePlugin({
     authors: [Devs._7n7],
     required: true,
 
-    start() {
+    async start() {
+        await registerAndFetch();
         // Registered in reverse rarity order — BadgePosition.START prepends,
         // so the last registered badge appears first on the profile.
         addProfileBadge(SwancordUserBadge); // shown last (END position)
