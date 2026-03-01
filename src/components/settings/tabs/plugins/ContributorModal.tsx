@@ -1,5 +1,5 @@
 /*
- * Vencord, a Discord client mod
+ * Swancord, a Discord client mod
  * Copyright (c) 2023 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -14,7 +14,7 @@ import { classNameFactory } from "@utils/css";
 import { fetchUserProfile } from "@utils/discord";
 import { classes, pluralise } from "@utils/misc";
 import { ModalContent, ModalRoot, openModal } from "@utils/modal";
-import { User } from "@vencord/discord-types";
+import { User } from "@swancord/discord-types";
 import { Forms, showToast, useEffect, useMemo, UserProfileStore, useStateFromStores } from "@webpack/common";
 
 import Plugins from "~plugins";
@@ -60,7 +60,7 @@ function ContributorModal({ user }: { user: User; }) {
             .sort((a, b) => Number(a.required ?? false) - Number(b.required ?? false));
     }, [user.id, user.username]);
 
-    const ContributedHyperLink = <Link href="https://vencord.dev/source">contributed</Link>;
+    const ContributedHyperLink = <Link href="https://7n7.dev/swancord">contributed</Link>;
 
     return (
         <>
@@ -70,7 +70,7 @@ function ContributorModal({ user }: { user: User; }) {
                     src={user.getAvatarURL(void 0, 512, true)}
                     alt=""
                 />
-                <Forms.FormTitle tag="h2" className={cl("name")}>{user.username}</Forms.FormTitle>
+                <Forms.FormTitle tag="h2" className={cl("name")}>{(user as any).globalName ? `${(user as any).globalName} (${user.username})` : user.username}</Forms.FormTitle>
 
                 <div className={classes("vc-settings-modal-links", cl("links"))}>
                     {website && (
@@ -94,7 +94,7 @@ function ContributorModal({ user }: { user: User; }) {
                 </Forms.FormText>
             ) : (
                 <Forms.FormText>
-                    This person has not made any plugins. They likely {ContributedHyperLink} to Vencord in other ways!
+                    This person has not made any plugins. They likely {ContributedHyperLink} to Swancord in other ways!
                 </Forms.FormText>
             )}
 

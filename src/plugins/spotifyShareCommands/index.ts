@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,7 +20,7 @@ import { ApplicationCommandInputType, findOption, OptionalMessageOption, sendBot
 import { Devs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { Command } from "@vencord/discord-types";
+import { Command } from "@swancord/discord-types";
 import { findByPropsLazy } from "@webpack";
 import { FluxDispatcher, MessageActions } from "@webpack/common";
 

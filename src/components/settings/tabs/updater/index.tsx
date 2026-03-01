@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -47,36 +47,17 @@ function Updater() {
         <SettingsTab>
             <FormSwitch
                 title="Automatically update"
-                description="Automatically update Vencord without confirmation prompt"
+                description="Automatically update Swancord without confirmation prompt"
                 value={settings.autoUpdate}
                 onChange={(v: boolean) => settings.autoUpdate = v}
             />
             <FormSwitch
                 title="Get notified when an automatic update completes"
-                description="Show a notification when Vencord automatically updates"
+                description="Show a notification when Swancord automatically updates"
                 value={settings.autoUpdateNotification}
                 onChange={(v: boolean) => settings.autoUpdateNotification = v}
                 disabled={!settings.autoUpdate}
             />
-
-            <Forms.FormTitle tag="h5">Repo</Forms.FormTitle>
-
-            <Forms.FormText>
-                {repoPending
-                    ? repo
-                    : err
-                        ? "Failed to retrieve - check console"
-                        : (
-                            <Link href={repo}>
-                                {repo.split("/").slice(-2).join("/")}
-                            </Link>
-                        )
-                }
-                {" "}
-                (<HashLink hash={gitHash} repo={repo} disabled={repoPending} />)
-            </Forms.FormText>
-
-            <Divider className={Margins.top8 + " " + Margins.bottom8} />
 
             <Forms.FormTitle tag="h5">Updates</Forms.FormTitle>
 

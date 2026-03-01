@@ -1,5 +1,5 @@
 /*
- * Vencord, a Discord client mod
+ * Swancord, a Discord client mod
  * Copyright (c) 2025 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,7 +11,7 @@ import { AddonCard } from "@components/settings/AddonCard";
 import { isObjectEmpty } from "@utils/misc";
 import { Plugin } from "@utils/types";
 import { React, showToast, Toasts } from "@webpack/common";
-import { Settings } from "Vencord";
+import { Settings } from "Swancord";
 
 import { cl, logger } from ".";
 import { openPluginModal } from "./PluginModal";

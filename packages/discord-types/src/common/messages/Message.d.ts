@@ -139,7 +139,7 @@ export class Message extends DiscordRecord {
     isEdited(): boolean;
     isSystemDM(): boolean;
 
-    /** Vencord added */
+    /** Swancord added */
     deleted?: boolean;
 }
 

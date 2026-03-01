@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ import { NotesIcon, OpenExternalIcon } from "@components/Icons";
 import { TooltipContainer } from "@components/TooltipContainer";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { Guild, User } from "@vencord/discord-types";
+import { Guild, User } from "@swancord/discord-types";
 import { findCssClassesLazy } from "@webpack";
 import { Alerts, Clickable, Menu, Parser } from "@webpack/common";
 
@@ -121,7 +121,7 @@ export default definePlugin({
                     cancelText: "Appeal",
                     confirmText: "Ok",
                     onCancel: async () =>
-                        VencordNative.native.openExternal(
+                        SwancordNative.native.openExternal(
                             "https://reviewdb.mantikafasi.dev/api/redirect?"
                             + new URLSearchParams({
                                 token: Auth.token!,

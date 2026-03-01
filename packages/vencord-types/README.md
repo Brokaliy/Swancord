@@ -1,11 +1,11 @@
-# Vencord Types
+# Swancord Types
 
-Typings for Vencord's api, published to npm
+Typings for Swancord's api, published to npm
 
 ```sh
-npm i @vencord/types
+npm i @swancord/types
 
-yarn add @vencord/types
+yarn add @swancord/types
 
-pnpm add @vencord/types
+pnpm add @swancord/types
 ```

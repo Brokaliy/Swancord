@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,16 +30,16 @@ export default definePlugin({
             replacement: [
                 {
                     match: /(?<=!1;)\i=null;(?=.{0,80}getPremiumSubscription\(\))/g,
-                    replace: "if(Vencord.Api.Notices.currentNotice)return false;$&"
+                    replace: "if(Swancord.Api.Notices.currentNotice)return false;$&"
                 },
                 {
                     match: /(?<=,NOTICE_DISMISS:function\(\i\){)return null!=(\i)/,
-                    replace: (m, notice) => `if(${notice}?.id=="VencordNotice")return(${notice}=null,Vencord.Api.Notices.nextNotice(),true);${m}`
+                    replace: (m, notice) => `if(${notice}?.id=="SwancordNotice")return(${notice}=null,Swancord.Api.Notices.nextNotice(),true);${m}`
                 },
                 // FIXME(Bundler agressive inline): Remove the non used compability once enough time has passed
                 {
                     match: /(?<=function (\i)\(\i\){)return null!=(\i)(?=.+?NOTICE_DISMISS:\1)/,
-                    replace: (m, _, notice) => `if(${notice}?.id=="VencordNotice")return(${notice}=null,Vencord.Api.Notices.nextNotice(),true);${m}`,
+                    replace: (m, _, notice) => `if(${notice}?.id=="SwancordNotice")return(${notice}=null,Swancord.Api.Notices.nextNotice(),true);${m}`,
                     noWarn: true
                 }
             ]

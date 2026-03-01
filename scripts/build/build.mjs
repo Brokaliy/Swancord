@@ -137,12 +137,12 @@ const buildConfigs = ([
     },
     {
         ...commonOpts,
-        entryPoints: ["src/Vencord.ts"],
+        entryPoints: ["src/Swancord.ts"],
         outfile: "dist/renderer.js",
         format: "iife",
         target: ["esnext"],
         footer: { js: "//# sourceURL=file:///VencordRenderer\n" + sourceMapFooter("renderer") },
-        globalName: "Vencord",
+        globalName: "Swancord",
         sourcemap,
         plugins: [
             globPlugins("discordDesktop"),
@@ -186,12 +186,12 @@ const buildConfigs = ([
     },
     {
         ...commonOpts,
-        entryPoints: ["src/Vencord.ts"],
+        entryPoints: ["src/Swancord.ts"],
         outfile: "dist/vencordDesktopRenderer.js",
         format: "iife",
         target: ["esnext"],
         footer: { js: "//# sourceURL=file:///VencordDesktopRenderer\n" + sourceMapFooter("vencordDesktopRenderer") },
-        globalName: "Vencord",
+        globalName: "Swancord",
         sourcemap,
         plugins: [
             globPlugins("vesktop"),

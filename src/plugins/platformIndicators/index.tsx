@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ import { addMessageDecoration, removeMessageDecoration } from "@api/MessageDecor
 import { Settings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { DiscordPlatform, OnlineStatus, User } from "@vencord/discord-types";
+import { DiscordPlatform, OnlineStatus, User } from "@swancord/discord-types";
 import { filters, findStoreLazy, mapMangledModuleLazy } from "@webpack";
 import { AuthenticationStore, PresenceStore, Tooltip, UserStore, useStateFromStores } from "@webpack/common";
 

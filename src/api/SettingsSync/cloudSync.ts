@@ -1,5 +1,5 @@
 /*
- * Vencord, a Discord client mod
+ * Swancord, a Discord client mod
  * Copyright (c) 2025 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -17,7 +17,7 @@ import { exportSettings, importSettings } from "./offline";
 const logger = new Logger("SettingsSync:Cloud", "#39b7e0");
 
 export function shouldCloudSync(direction: "push" | "pull") {
-    const localDirection = localStorage.Vencord_cloudSyncDirection;
+    const localDirection = localStorage.Swancord_cloudSyncDirection;
 
     return localDirection === direction || localDirection === "both";
 }
@@ -49,7 +49,7 @@ export async function putCloudSettings(manual?: boolean) {
 
         const { written } = await res.json();
         PlainSettings.cloud.settingsSyncVersion = written;
-        VencordNative.settings.set(PlainSettings);
+        SwancordNative.settings.set(PlainSettings);
 
         logger.info("Settings uploaded to cloud successfully");
 
@@ -61,7 +61,7 @@ export async function putCloudSettings(manual?: boolean) {
             });
         }
 
-        delete localStorage.Vencord_settingsDirty;
+        delete localStorage.Swancord_settingsDirty;
     } catch (e: any) {
         logger.error("Failed to sync up", e);
         showNotification({
@@ -138,7 +138,7 @@ export async function getCloudSettings(shouldNotify = true, force = false) {
 
         // sync with server timestamp instead of local one
         PlainSettings.cloud.settingsSyncVersion = written;
-        VencordNative.settings.set(PlainSettings);
+        SwancordNative.settings.set(PlainSettings);
 
         logger.info("Settings loaded from cloud successfully");
         if (shouldNotify)
@@ -150,7 +150,7 @@ export async function getCloudSettings(shouldNotify = true, force = false) {
                 noPersist: true
             });
 
-        delete localStorage.Vencord_settingsDirty;
+        delete localStorage.Swancord_settingsDirty;
 
         return true;
     } catch (e: any) {

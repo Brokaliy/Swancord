@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 import * as DataStore from "@api/DataStore";
 import { Settings } from "@api/Settings";
 import { Flex } from "@components/Flex";
-import { openNotificationSettingsModal } from "@components/settings/tabs/vencord/NotificationSettings";
+import { openNotificationSettingsModal } from "@components/settings/tabs/swancord/NotificationSettings";
 import { classNameFactory } from "@utils/css";
 import { closeModal, ModalCloseButton, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { useAwaiter } from "@utils/react";

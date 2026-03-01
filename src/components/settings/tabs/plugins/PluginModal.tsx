@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,14 +23,14 @@ import { useSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
 import { debounce } from "@shared/debounce";
-import { gitRemote } from "@shared/vencordUserAgent";
+import { gitRemote } from "@shared/swancordUserAgent";
 import { classNameFactory } from "@utils/css";
 import { proxyLazy } from "@utils/lazy";
 import { Margins } from "@utils/margins";
 import { classes, isObjectEmpty } from "@utils/misc";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { OptionType, Plugin } from "@utils/types";
-import { User } from "@vencord/discord-types";
+import { User } from "@swancord/discord-types";
 import { findCssClassesLazy } from "@webpack";
 import { Clickable, FluxDispatcher, Forms, React, Text, Tooltip, useEffect, useMemo, UserStore, UserSummaryItem, UserUtils, useState } from "@webpack/common";
 import { Constructor } from "type-fest";
@@ -167,7 +167,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                             <div className="vc-settings-modal-links">
                                 <WebsiteButton
                                     text="View more info"
-                                    href={`https://vencord.dev/plugins/${plugin.name}`}
+                                    href={`https://swancord.dev/plugins/${plugin.name}`}
                                 />
                                 <GithubButton
                                     text="View source code"

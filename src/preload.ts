@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,9 @@ import { debounce } from "@shared/debounce";
 import { IpcEvents } from "@shared/IpcEvents";
 import { contextBridge, webFrame } from "electron/renderer";
 
-import VencordNative, { invoke, sendSync } from "./VencordNative";
+import SwancordNative, { invoke, sendSync } from "./SwancordNative";
 
-contextBridge.exposeInMainWorld("VencordNative", VencordNative);
+contextBridge.exposeInMainWorld("SwancordNative", SwancordNative);
 
 // Discord
 if (location.protocol !== "data:") {
@@ -35,7 +35,7 @@ if (location.protocol !== "data:") {
     }
 } // Monaco popout
 else {
-    contextBridge.exposeInMainWorld("setCss", debounce(VencordNative.quickCss.set));
-    contextBridge.exposeInMainWorld("getCurrentCss", VencordNative.quickCss.get);
-    contextBridge.exposeInMainWorld("getTheme", VencordNative.quickCss.getEditorTheme);
+    contextBridge.exposeInMainWorld("setCss", debounce(SwancordNative.quickCss.set));
+    contextBridge.exposeInMainWorld("getCurrentCss", SwancordNative.quickCss.get);
+    contextBridge.exposeInMainWorld("getTheme", SwancordNative.quickCss.getEditorTheme);
 }

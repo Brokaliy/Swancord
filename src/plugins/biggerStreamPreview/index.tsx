@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ import { ScreenshareIcon } from "@components/Icons";
 import { Devs } from "@utils/constants";
 import { openImageModal } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { Channel, User } from "@vencord/discord-types";
+import { Channel, User } from "@swancord/discord-types";
 import { Menu } from "@webpack/common";
 
 import { ApplicationStreamingStore, ApplicationStreamPreviewStore } from "./webpack/stores";

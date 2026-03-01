@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,8 +28,8 @@ import { installExt } from "./utils/extensions";
 
 if (IS_VESKTOP || !IS_VANILLA) {
     app.whenReady().then(() => {
-        protocol.handle("vencord", ({ url: unsafeUrl }) => {
-            let url = decodeURI(unsafeUrl).slice("vencord://".length).replace(/\?v=\d+$/, "");
+        protocol.handle("swancord", ({ url: unsafeUrl }) => {
+            let url = decodeURI(unsafeUrl).slice("swancord://".length).replace(/\?v=\d+$/, "");
 
             if (url.endsWith("/")) url = url.slice(0, -1);
 
@@ -46,16 +46,25 @@ if (IS_VESKTOP || !IS_VANILLA) {
                 return net.fetch(pathToFileURL(safeUrl).toString());
             }
 
+            if (url.startsWith("/assets/")) {
+                const asset = url.slice("/assets/".length);
+                const safeUrl = ensureSafePath(join(__dirname, "assets"), asset);
+                if (!safeUrl) {
+                    return new Response(null, { status: 404 });
+                }
+                return net.fetch(pathToFileURL(safeUrl).toString());
+            }
+
             // Source Maps! Maybe there's a better way but since the renderer is executed
             // from a string I don't think any other form of sourcemaps would work
 
             switch (url) {
                 case "renderer.js.map":
-                case "vencordDesktopRenderer.js.map":
+                case "swancordDesktopRenderer.js.map":
                 case "preload.js.map":
-                case "vencordDesktopPreload.js.map":
+                case "swancordDesktopPreload.js.map":
                 case "patcher.js.map":
-                case "vencordDesktopMain.js.map":
+                case "swancordDesktopMain.js.map":
                     return net.fetch(pathToFileURL(join(__dirname, url)).toString());
                 default:
                     return new Response(null, {
@@ -67,8 +76,8 @@ if (IS_VESKTOP || !IS_VANILLA) {
         try {
             if (RendererSettings.store.enableReactDevtools)
                 installExt("fmkadmapgofadopljbjfkapdkoienihi")
-                    .then(() => console.info("[Vencord] Installed React Developer Tools"))
-                    .catch(err => console.error("[Vencord] Failed to install React Developer Tools", err));
+                    .then(() => console.info("[Swancord] Installed React Developer Tools"))
+                    .catch(err => console.error("[Swancord] Failed to install React Developer Tools", err));
         } catch { }
 
 

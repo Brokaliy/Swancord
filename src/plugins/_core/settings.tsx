@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and Megumin
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,8 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, CloudIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PlaceholderIcon, PluginsIcon, UpdaterIcon, VesktopSettingsIcon } from "@components/Icons";
-import { BackupAndRestoreTab, CloudTab, PatchHelperTab, PluginsTab, ThemesTab, UpdaterTab, VencordTab } from "@components/settings/tabs";
+import { BackupRestoreIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PlaceholderIcon, PluginsIcon, UpdaterIcon, VesktopSettingsIcon } from "@components/Icons";
+import { BackupAndRestoreTab, PatchHelperTab, PluginsTab, ThemesTab, UpdaterTab, SwancordTab } from "@components/settings/tabs";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
@@ -79,7 +79,7 @@ interface SettingsLayoutBuilder {
 const settings = definePluginSettings({
     settingsLocation: {
         type: OptionType.SELECT,
-        description: "Where to put the Vencord settings section",
+        description: "Where to put the Swancord settings section",
         options: [
             { label: "At the very top", value: "top" },
             { label: "Above the Nitro section", value: "aboveNitro", default: true },
@@ -92,13 +92,12 @@ const settings = definePluginSettings({
 });
 
 const settingsSectionMap: [string, string][] = [
-    ["VencordSettings", "vencord_main_panel"],
-    ["VencordPlugins", "vencord_plugins_panel"],
-    ["VencordThemes", "vencord_themes_panel"],
-    ["VencordUpdater", "vencord_updater_panel"],
-    ["VencordCloud", "vencord_cloud_panel"],
-    ["VencordBackupAndRestore", "vencord_backup_restore_panel"],
-    ["VencordPatchHelper", "vencord_patch_helper_panel"]
+    ["SwancordSettings", "swancord_main_panel"],
+    ["SwancordPlugins", "swancord_plugins_panel"],
+    ["SwancordThemes", "swancord_themes_panel"],
+    ["SwancordUpdater", "swancord_updater_panel"],
+    ["SwancordBackupAndRestore", "swancord_backup_restore_panel"],
+    ["SwancordPatchHelper", "swancord_patch_helper_panel"]
 ];
 
 export default definePlugin({
@@ -210,52 +209,45 @@ export default definePlugin({
         if (originalLayoutBuilder.key !== "$Root") return layout;
         if (!Array.isArray(layout)) return layout;
 
-        if (layout.some(s => s?.key === "vencord_section")) return layout;
+        if (layout.some(s => s?.key === "swancord_section")) return layout;
 
         const { buildEntry } = this;
 
-        const vencordEntries: SettingsLayoutNode[] = [
+        const swancordEntries: SettingsLayoutNode[] = [
             buildEntry({
-                key: "vencord_main",
-                title: "Vencord",
-                panelTitle: "Vencord Settings",
-                Component: VencordTab,
+                key: "swancord_main",
+                title: "Swancord",
+                panelTitle: "Swancord Settings",
+                Component: SwancordTab,
                 Icon: MainSettingsIcon
             }),
             buildEntry({
-                key: "vencord_plugins",
+                key: "swancord_plugins",
                 title: "Plugins",
                 Component: PluginsTab,
                 Icon: PluginsIcon
             }),
             buildEntry({
-                key: "vencord_themes",
+                key: "swancord_themes",
                 title: "Themes",
                 Component: ThemesTab,
                 Icon: PaintbrushIcon
             }),
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
-                key: "vencord_updater",
+                key: "swancord_updater",
                 title: "Updater",
-                panelTitle: "Vencord Updater",
+                panelTitle: "Swancord Updater",
                 Component: UpdaterTab,
                 Icon: UpdaterIcon
             }),
             buildEntry({
-                key: "vencord_cloud",
-                title: "Cloud",
-                panelTitle: "Vencord Cloud",
-                Component: CloudTab,
-                Icon: CloudIcon
-            }),
-            buildEntry({
-                key: "vencord_backup_restore",
+                key: "swancord_backup_restore",
                 title: "Backup & Restore",
                 Component: BackupAndRestoreTab,
                 Icon: BackupRestoreIcon
             }),
             IS_DEV && PatchHelperTab && buildEntry({
-                key: "vencord_patch_helper",
+                key: "swancord_patch_helper",
                 title: "Patch Helper",
                 Component: PatchHelperTab,
                 Icon: PatchHelperIcon
@@ -267,7 +259,7 @@ export default definePlugin({
                 if (Object.values(FallbackSectionTypes).includes(section)) return null;
 
                 return buildEntry({
-                    key: `vencord_deprecated_custom_${section}`,
+                    key: `swancord_deprecated_custom_${section}`,
                     title: label,
                     Component: element,
                     Icon: section === "Vesktop" ? VesktopSettingsIcon : PlaceholderIcon
@@ -275,11 +267,11 @@ export default definePlugin({
             })
         ].filter(isTruthy);
 
-        const vencordSection: SettingsLayoutNode = {
-            key: "vencord_section",
+        const swancordSection: SettingsLayoutNode = {
+            key: "swancord_section",
             type: LayoutTypes.SECTION,
-            useTitle: () => "Vencord Settings",
-            buildLayout: () => vencordEntries
+            useTitle: () => "Swancord Settings",
+            buildLayout: () => swancordEntries
         };
 
         const { settingsLocation } = settings.store;
@@ -302,7 +294,7 @@ export default definePlugin({
             idx += 1;
         }
 
-        layout.splice(idx, 0, vencordSection);
+        layout.splice(idx, 0, swancordSection);
 
         return layout;
     },
@@ -312,12 +304,12 @@ export default definePlugin({
     customEntries: [] as EntryOptions[],
 
     get electronVersion() {
-        return VencordNative.native.getVersions().electron || window.legcord?.electron || null;
+        return SwancordNative.native.getVersions().electron || window.legcord?.electron || null;
     },
 
     get chromiumVersion() {
         try {
-            return VencordNative.native.getVersions().chrome
+            return SwancordNative.native.getVersions().chrome
                 // @ts-expect-error Typescript will add userAgentData IMMEDIATELY
                 || navigator.userAgentData?.brands?.find(b => b.brand === "Chromium" || b.brand === "Google Chrome")?.version
                 || null;
@@ -337,7 +329,7 @@ export default definePlugin({
     getInfoRows() {
         const { electronVersion, chromiumVersion, additionalInfo } = this;
 
-        const rows = [`Vencord ${gitHash}${additionalInfo}`];
+        const rows = [`Swancord ${gitHash}${additionalInfo}`];
 
         if (electronVersion) rows.push(`Electron ${electronVersion}`);
         if (chromiumVersion) rows.push(`Chromium ${chromiumVersion}`);

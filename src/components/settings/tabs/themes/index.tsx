@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,10 +27,12 @@ import { Forms, React, TabBar, useState } from "@webpack/common";
 import { CspErrorCard } from "./CspErrorCard";
 import { LocalThemesTab } from "./LocalThemesTab";
 import { OnlineThemesTab } from "./OnlineThemesTab";
+import { SwancordThemesTab } from "./SwancordThemesTab";
 
 const enum ThemeTab {
     LOCAL,
-    ONLINE
+    ONLINE,
+    SWANCORD
 }
 
 function ThemesTab() {
@@ -57,12 +59,19 @@ function ThemesTab() {
                 >
                     Online Themes
                 </TabBar.Item>
+                <TabBar.Item
+                    className="vc-settings-tab-bar-item"
+                    id={ThemeTab.SWANCORD}
+                >
+                    Swancord Themes
+                </TabBar.Item>
             </TabBar>
 
             <CspErrorCard />
 
             {currentTab === ThemeTab.LOCAL && <LocalThemesTab />}
             {currentTab === ThemeTab.ONLINE && <OnlineThemesTab />}
+            {currentTab === ThemeTab.SWANCORD && <SwancordThemesTab />}
         </SettingsTab>
     );
 }

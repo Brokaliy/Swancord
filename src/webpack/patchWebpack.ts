@@ -1,5 +1,5 @@
 /*
- * Vencord, a Discord client mod
+ * Swancord, a Discord client mod
  * Copyright (c) 2024 Vendicated, Nuckyz, and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -9,7 +9,7 @@ import { makeLazy } from "@utils/lazy";
 import { Logger } from "@utils/Logger";
 import { interpolateIfDefined } from "@utils/misc";
 import { Patch, PatchReplacement } from "@utils/types";
-import { WebpackRequire } from "@vencord/discord-types/webpack";
+import { WebpackRequire } from "@swancord/discord-types/webpack";
 
 import { traceFunctionWithResults } from "../debug/Tracer";
 import { AnyModuleFactory, AnyWebpackRequire, MaybePatchedModuleFactory, PatchedModuleFactory } from "./types";

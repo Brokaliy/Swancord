@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -43,6 +43,7 @@ export interface Settings {
     useQuickCss: boolean;
     eagerPatches: boolean;
     enabledThemes: string[];
+    enabledSwancordThemes: string[];
     enableReactDevtools: boolean;
     themeLinks: string[];
     frameless: boolean;
@@ -98,6 +99,7 @@ const DefaultSettings: Settings = {
     themeLinks: [],
     eagerPatches: IS_REPORTER,
     enabledThemes: [],
+    enabledSwancordThemes: [],
     enableReactDevtools: false,
     frameless: false,
     transparent: false,
@@ -121,13 +123,13 @@ const DefaultSettings: Settings = {
 
     cloud: {
         authenticated: false,
-        url: "https://api.vencord.dev/",
+        url: "https://api.swancord.dev/",
         settingsSync: false,
         settingsSyncVersion: 0
     }
 };
 
-const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
+const settings = !IS_REPORTER ? SwancordNative.settings.get() : {} as Settings;
 mergeDefaults(settings, DefaultSettings);
 
 export const SettingsStore = new SettingsStoreClass(settings, {
@@ -172,7 +174,7 @@ export const SettingsStore = new SettingsStoreClass(settings, {
 if (!IS_REPORTER) {
     SettingsStore.addGlobalChangeListener((_, path) => {
         SettingsStore.plain.cloud.settingsSyncVersion = Date.now();
-        VencordNative.settings.set(SettingsStore.plain, path);
+        SwancordNative.settings.set(SettingsStore.plain, path);
     });
 }
 

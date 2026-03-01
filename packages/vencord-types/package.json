@@ -1,5 +1,5 @@
 {
-    "name": "@vencord/types",
+    "name": "@swancord/types",
     "private": false,
     "version": "1.14.1",
     "description": "",
@@ -9,7 +9,7 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],
-    "author": "Vencord",
+    "author": "Swancord",
     "license": "GPL-3.0",
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
@@ -19,7 +19,7 @@
     "dependencies": {
         "@types/lodash": "4.17.15",
         "@types/node": "^22.13.4",
-        "@vencord/discord-types": "^1.0.0",
+        "@swancord/discord-types": "workspace:^",
         "highlight.js": "11.11.1",
         "moment": "^2.22.2",
         "ts-pattern": "^5.6.0",

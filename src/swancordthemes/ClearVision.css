@@ -1,0 +1,59 @@
+/**
+ * @name ClearVision V7
+ * @description Highly customizable theme for Vencord with background image support.
+ * @author ClearVision Team
+ * @version 7.0.1
+ * @source https://github.com/ClearVision/ClearVision-v7
+ * @website https://clearvision.github.io
+ */
+
+@import url("https://clearvision.github.io/ClearVision-v7/main.css");
+@import url("https://clearvision.github.io/ClearVision-v7/vencord.css");
+
+:root {
+    --main-color: #2780e6;
+    --hover-color: #1e63b3;
+    --success-color: #43b581;
+    --danger-color: #982929;
+
+    --online-color: #43b581;
+    --idle-color: #faa61a;
+    --dnd-color: #982929;
+    --streaming-color: #593695;
+    --offline-color: #808080;
+
+    --background-shading-percent: 100%;
+    --background-image: url(https://clearvision.github.io/images/sapphire.jpg);
+    --background-position: center;
+    --background-size: cover;
+    --background-attachment: fixed;
+    --background-filter: saturate(calc(var(--saturation-factor, 1) * 1));
+
+    --user-popout-image: var(--background-image);
+    --user-popout-position: var(--background-position);
+    --user-popout-size: var(--background-size);
+    --user-popout-attachment: var(--background-attachment);
+    --user-popout-filter: var(--background-filter);
+
+    --user-modal-image: var(--background-image);
+    --user-modal-position: var(--background-position);
+    --user-modal-size: var(--background-size);
+    --user-modal-attachment: var(--background-attachment);
+    --user-modal-filter: var(--background-filter);
+
+    --home-icon: url(https://clearvision.github.io/icons/discord.svg);
+    --home-size: cover;
+
+    --main-font: "gg sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --code-font: Consolas, "gg mono", "Liberation Mono", Menlo, Courier, monospace;
+
+    --channel-normal: var(--interactive-text-default);
+    --channel-muted: var(--interactive-muted);
+    --channel-hover: var(--interactive-text-hover);
+    --channel-selected: var(--interactive-text-active);
+    --channel-selected-bg: var(--main-color);
+    --channel-unread: var(--main-color);
+    --channel-unread-hover: var(--hover-color);
+
+    --focus-color: var(--main-color);
+}

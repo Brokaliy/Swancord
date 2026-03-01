@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,19 +29,19 @@ export default definePlugin({
     authors: [Devs.Megu],
     start() {
         SettingsPlugin.customEntries.push({
-            key: "vencord_startup_timings",
+            key: "swancord_startup_timings",
             title: "Startup Timings",
             Component: StartupTimingPage,
             Icon: ClockIcon
         });
-        SettingsPlugin.settingsSectionMap.push(["VencordStartupTimings", "vencord_startup_timings"]);
+        SettingsPlugin.settingsSectionMap.push(["SwancordStartupTimings", "swancord_startup_timings"]);
     },
     stop() {
         function removeFromArray<T>(arr: T[], predicate: (e: T) => boolean) {
             const idx = arr.findIndex(predicate);
             if (idx !== -1) arr.splice(idx, 1);
         }
-        removeFromArray(SettingsPlugin.customEntries, e => e.key === "vencord_startup_timings");
-        removeFromArray(SettingsPlugin.settingsSectionMap, entry => entry[1] === "vencord_startup_timings");
+        removeFromArray(SettingsPlugin.customEntries, e => e.key === "swancord_startup_timings");
+        removeFromArray(SettingsPlugin.settingsSectionMap, entry => entry[1] === "swancord_startup_timings");
     },
 });

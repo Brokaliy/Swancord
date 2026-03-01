@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2023 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 */
 
 import { classNameFactory } from "@utils/css";
-import { Guild, GuildMember, Role } from "@vencord/discord-types";
+import { Guild, GuildMember, Role } from "@swancord/discord-types";
 import { findByPropsLazy } from "@webpack";
 import { GuildRoleStore } from "@webpack/common";
 

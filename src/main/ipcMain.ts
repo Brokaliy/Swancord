@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ import "./settings";
 
 import { debounce } from "@shared/debounce";
 import { IpcEvents } from "@shared/IpcEvents";
-import { BrowserWindow, ipcMain, nativeTheme, shell, systemPreferences } from "electron";
+import { BrowserWindow, ipcMain, nativeTheme, net, shell, systemPreferences } from "electron";
 import monacoHtml from "file://monacoWin.html?minify&base64";
 import { FSWatcher, mkdirSync, readFileSync, watch, writeFileSync } from "fs";
 import { open, readdir, readFile } from "fs/promises";
@@ -33,7 +33,7 @@ import { getThemeInfo, stripBOM, UserThemeHeader } from "./themes";
 import { ALLOWED_PROTOCOLS, QUICK_CSS_PATH, SETTINGS_DIR, THEMES_DIR } from "./utils/constants";
 import { makeLinksOpenExternally } from "./utils/externalLinks";
 
-const RENDERER_CSS_PATH = join(__dirname, IS_VESKTOP ? "vencordDesktopRenderer.css" : "renderer.css");
+const RENDERER_CSS_PATH = join(__dirname, IS_VESKTOP ? "swancordDesktopRenderer.css" : "renderer.css");
 
 mkdirSync(THEMES_DIR, { recursive: true });
 
@@ -144,7 +144,7 @@ ipcMain.on(IpcEvents.GET_MONACO_THEME, e => {
 });
 
 ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async () => {
-    const title = "Vencord QuickCSS Editor";
+    const title = "Swancord QuickCSS Editor";
     const existingWindow = BrowserWindow.getAllWindows().find(w => w.title === title);
     if (existingWindow && !existingWindow.isDestroyed()) {
         existingWindow.focus();
@@ -156,7 +156,7 @@ ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async () => {
         autoHideMenuBar: true,
         darkTheme: true,
         webPreferences: {
-            preload: join(__dirname, IS_DISCORD_DESKTOP ? "preload.js" : "vencordDesktopPreload.js"),
+            preload: join(__dirname, IS_DISCORD_DESKTOP ? "preload.js" : "swancordDesktopPreload.js"),
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false
@@ -169,6 +169,24 @@ ipcMain.handle(IpcEvents.OPEN_MONACO_EDITOR, async () => {
 });
 
 ipcMain.handle(IpcEvents.GET_RENDERER_CSS, () => readFile(RENDERER_CSS_PATH, "utf-8"));
+
+// Disboard proxy — fetches from disboard.org in the main process (no CORS)
+ipcMain.handle(IpcEvents.DISBOARD_FETCH, async (_, path: string) => {
+    try {
+        const safe = path.replace(/[^a-zA-Z0-9\-_/?=&%.+]/g, "");
+        const res = await net.fetch("https://disboard.org" + safe, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Cache-Control": "no-cache",
+            }
+        });
+        return await res.text();
+    } catch (e) {
+        return null;
+    }
+});
 
 if (IS_DISCORD_DESKTOP) {
     ipcMain.on(IpcEvents.PRELOAD_GET_RENDERER_JS, e => {

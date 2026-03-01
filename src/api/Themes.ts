@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,32 +18,55 @@
 
 import { Settings, SettingsStore } from "@api/Settings";
 import { createAndAppendStyle } from "@utils/css";
-import { ThemeStore } from "@vencord/discord-types";
+import { ThemeStore } from "@swancord/discord-types";
 import { PopoutWindowStore } from "@webpack/common";
+import SwancordThemes from "~swancord-themes";
 
-import { userStyleRootNode, vencordRootNode } from "./Styles";
+import { userStyleRootNode, swancordRootNode } from "./Styles";
 
 let style: HTMLStyleElement;
 let themesStyle: HTMLStyleElement;
+let bundledThemesStyle: HTMLStyleElement;
+
+const THEME_SCRIPT_PREFIX = "swancord-theme-script-";
+
+function initBundledThemes() {
+    bundledThemesStyle ??= createAndAppendStyle("swancord-bundled-themes", userStyleRootNode);
+    const { enabledSwancordThemes } = Settings;
+    const active = SwancordThemes.filter(t => enabledSwancordThemes.includes(t.id));
+
+    // CSS
+    bundledThemesStyle.textContent = active.map(t => t.css).join("\n");
+
+    // JS companions — remove previously injected scripts, inject new ones
+    document.querySelectorAll("script[data-swancord-theme]").forEach(el => el.remove());
+    for (const theme of active) {
+        if (!theme.js) continue;
+        const el = document.createElement("script");
+        el.setAttribute("data-swancord-theme", theme.id);
+        el.textContent = theme.js;
+        document.head.appendChild(el);
+    }
+}
 
 async function toggle(isEnabled: boolean) {
     if (!style) {
         if (isEnabled) {
-            style = createAndAppendStyle("vencord-custom-css", userStyleRootNode);
-            VencordNative.quickCss.addChangeListener(css => {
+            style = createAndAppendStyle("swancord-custom-css", userStyleRootNode);
+            SwancordNative.quickCss.addChangeListener(css => {
                 style.textContent = css;
                 // At the time of writing this, changing textContent resets the disabled state
                 style.disabled = !Settings.useQuickCss;
                 updatePopoutWindows();
             });
-            style.textContent = await VencordNative.quickCss.get();
+            style.textContent = await SwancordNative.quickCss.get();
         }
     } else
         style.disabled = !isEnabled;
 }
 
 async function initThemes() {
-    themesStyle ??= createAndAppendStyle("vencord-themes", userStyleRootNode);
+    themesStyle ??= createAndAppendStyle("swancord-themes", userStyleRootNode);
 
     const { themeLinks, enabledThemes } = Settings;
 
@@ -67,13 +90,13 @@ async function initThemes() {
 
     if (IS_WEB) {
         for (const theme of enabledThemes) {
-            const themeData = await VencordNative.themes.getThemeData(theme);
+            const themeData = await SwancordNative.themes.getThemeData(theme);
             if (!themeData) continue;
             const blob = new Blob([themeData], { type: "text/css" });
             links.push(URL.createObjectURL(blob));
         }
     } else {
-        const localThemes = enabledThemes.map(theme => `vencord:///themes/${theme}?v=${Date.now()}`);
+        const localThemes = enabledThemes.map(theme => `swancord:///themes/${theme}?v=${Date.now()}`);
         links.push(...localThemes);
     }
 
@@ -88,9 +111,9 @@ function applyToPopout(popoutWindow: Window | undefined, key: string) {
 
     const doc = popoutWindow.document;
 
-    doc.querySelector("vencord-root")?.remove();
+    doc.querySelector("swancord-root")?.remove();
 
-    doc.documentElement.appendChild(vencordRootNode.cloneNode(true));
+    doc.documentElement.appendChild(swancordRootNode.cloneNode(true));
 }
 
 function updatePopoutWindows() {
@@ -105,12 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (IS_USERSCRIPT) return;
 
     initThemes();
+    initBundledThemes();
 
     toggle(Settings.useQuickCss);
     SettingsStore.addChangeListener("useQuickCss", toggle);
 
     SettingsStore.addChangeListener("themeLinks", initThemes);
     SettingsStore.addChangeListener("enabledThemes", initThemes);
+    SettingsStore.addChangeListener("enabledSwancordThemes", initBundledThemes);
 
     window.addEventListener("message", event => {
         const { discordPopoutEvent } = event.data || {};
@@ -120,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (!IS_WEB) {
-        VencordNative.quickCss.addThemeChangeListener(initThemes);
+        SwancordNative.quickCss.addThemeChangeListener(initThemes);
     }
 }, { once: true });
 

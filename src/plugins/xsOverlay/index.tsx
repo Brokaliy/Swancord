@@ -1,5 +1,5 @@
 /*
- * Vencord, a Discord client mod
+ * Swancord, a Discord client mod
  * Copyright (c) 2024 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -8,7 +8,7 @@ import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { makeRange, OptionType, PluginNative, ReporterTestable } from "@utils/types";
-import type { Channel, Embed, GuildMember, MessageAttachment, User } from "@vencord/discord-types";
+import type { Channel, Embed, GuildMember, MessageAttachment, User } from "@swancord/discord-types";
 import { findByCodeLazy, findLazy } from "@webpack";
 import { Button, ChannelStore, GuildRoleStore, GuildStore, UserStore } from "@webpack/common";
 
@@ -175,7 +175,7 @@ let socket: WebSocket;
 
 async function start() {
     if (socket) socket.close();
-    socket = new WebSocket(`ws://127.0.0.1:${settings.store.webSocketPort ?? 42070}/?client=Vencord`);
+    socket = new WebSocket(`ws://127.0.0.1:${settings.store.webSocketPort ?? 42070}/?client=Swancord`);
     return new Promise((resolve, reject) => {
         socket.onopen = resolve;
         socket.onerror = reject;
@@ -183,7 +183,7 @@ async function start() {
     });
 }
 
-const Native = VencordNative.pluginHelpers.XSOverlay as PluginNative<typeof import("./native")>;
+const Native = SwancordNative.pluginHelpers.XSOverlay as PluginNative<typeof import("./native")>;
 
 export default definePlugin({
     name: "XSOverlay",
@@ -337,7 +337,7 @@ function sendMsgNotif(titleString: string, content: string, message: Message) {
                 content: content,
                 useBase64Icon: true,
                 icon: result,
-                sourceApp: "Vencord"
+                sourceApp: "Swancord"
             };
 
             sendToOverlay(msgData);
@@ -356,7 +356,7 @@ function sendOtherNotif(content: string, titleString: string) {
         content: content,
         useBase64Icon: false,
         icon: "default",
-        sourceApp: "Vencord"
+        sourceApp: "Swancord"
     };
     sendToOverlay(msgData);
 }
@@ -367,7 +367,7 @@ async function sendToOverlay(notif: NotificationObject) {
         return;
     }
     const apiObject: ApiObject = {
-        sender: "Vencord",
+        sender: "Swancord",
         target: "xsoverlay",
         command: "SendNotification",
         jsonData: JSON.stringify(notif),

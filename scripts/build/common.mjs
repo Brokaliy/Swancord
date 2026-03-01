@@ -145,7 +145,7 @@ export const globPlugins = kind => ({
         });
 
         build.onLoad({ filter, namespace: "import-plugins" }, async () => {
-            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "userplugins"];
+            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "userplugins", "swancordplugins"];
             let code = "";
             let pluginsCode = "\n";
             let metaCode = "\n";
@@ -153,6 +153,7 @@ export const globPlugins = kind => ({
             let i = 0;
             for (const dir of pluginDirs) {
                 const userPlugin = dir === "userplugins";
+                const swancordPlugin = dir === "swancordplugins";
 
                 const fullDir = `./src/${dir}`;
                 if (!await exists(fullDir)) continue;
@@ -184,7 +185,7 @@ export const globPlugins = kind => ({
                     const mod = `p${i}`;
                     code += `import ${mod} from "./${dir}/${fileName.replace(/\.tsx?$/, "")}";\n`;
                     pluginsCode += `[${mod}.name]:${mod},\n`;
-                    metaCode += `[${mod}.name]:${JSON.stringify({ folderName, userPlugin })},\n`;
+                    metaCode += `[${mod}.name]:${JSON.stringify({ folderName, userPlugin, swancordPlugin })},\n`;
                     i++;
                 }
             }
@@ -235,6 +236,45 @@ export const gitRemotePlugin = {
             }
 
             return { contents: `export default "${remote}"` };
+        });
+    }
+};
+
+/**
+ * @type {import("esbuild").Plugin}
+ */
+export const swancordThemesPlugin = {
+    name: "swancord-themes-plugin",
+    setup: build => {
+        const filter = /^~swancord-themes$/;
+        build.onResolve({ filter }, args => ({
+            namespace: "swancord-themes",
+            path: args.path
+        }));
+        build.onLoad({ filter, namespace: "swancord-themes" }, async () => {
+            const themesDir = "./src/swancordthemes";
+            if (!await exists(themesDir)) {
+                return { contents: "export default [];", resolveDir: "./src" };
+            }
+            const files = await readdir(themesDir);
+            const themes = [];
+            for (const file of files) {
+                if (!file.endsWith(".css")) continue;
+                const id = file.replace(/\.css$/, "");
+                const css = await readFile(`${themesDir}/${file}`, "utf-8");
+                const name = css.match(/@name\s+(.+)/)?.[1]?.trim() ?? id;
+                const description = css.match(/@description\s+(.+)/)?.[1]?.trim() ?? "";
+                const author = css.match(/@author\s+(.+)/)?.[1]?.trim() ?? "";
+                // Check for companion JS file (e.g. 7n7dark.js alongside 7n7dark.css)
+                const jsPath = `${themesDir}/${id}.js`;
+                const js = await exists(jsPath) ? await readFile(jsPath, "utf-8") : null;
+                themes.push(JSON.stringify({ id, name, description, author, css, ...(js ? { js } : {}) }));
+            }
+            return {
+                contents: `export default [${themes.join(",")}];`,
+                resolveDir: "./src",
+                watchDirs: [resolve("src", "swancordthemes")],
+            };
         });
     }
 };
@@ -354,7 +394,7 @@ export const commonOpts = {
     sourcemap: watch ? "inline" : "external",
     legalComments: "linked",
     banner,
-    plugins: [fileUrlPlugin, gitHashPlugin, gitRemotePlugin, stylePlugin],
+    plugins: [fileUrlPlugin, gitHashPlugin, gitRemotePlugin, stylePlugin, swancordThemesPlugin],
     external: ["~plugins", "~git-hash", "~git-remote", "/assets/*"],
     inject: ["./scripts/build/inject/react.mjs"],
     jsx: "transform",

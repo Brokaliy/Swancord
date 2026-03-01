@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -71,6 +71,49 @@ function ReloadRequiredCard({ required }: { required: boolean; }) {
     );
 }
 
+function CollapsibleSection({ title, children, defaultOpen = true, count, accentColor, tag, tagColor }: {
+    title: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+    count?: number;
+    accentColor?: string;
+    tag?: string;
+    tagColor?: string;
+}) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <div className={Margins.top20}>
+            <button className={cl("section-header")} onClick={() => setOpen(o => !o)}>
+                {accentColor && (
+                    <span className={cl("section-accent")} style={{ background: accentColor }} />
+                )}
+                <HeadingTertiary style={{ margin: 0 }}>{title}</HeadingTertiary>
+                {count !== undefined && (
+                    <span className={cl("section-count")}>{count}</span>
+                )}
+                {tag && (
+                    <span
+                        className={cl("section-tag")}
+                        style={{
+                            background: tagColor ? `${tagColor}18` : "rgba(255,255,255,0.06)",
+                            color: tagColor ?? "var(--text-muted)",
+                            border: `1px solid ${tagColor ? `${tagColor}30` : "rgba(255,255,255,0.08)"}`,
+                        }}
+                    >{tag}</span>
+                )}
+                <svg
+                    className={cl("section-arrow")}
+                    style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+                    width="16" height="16" viewBox="0 0 24 24"
+                >
+                    <path fill="currentColor" d="M12 16L4 8h16z" />
+                </svg>
+            </button>
+            {open && children}
+        </div>
+    );
+}
+
 const enum SearchStatus {
     ALL,
     ENABLED,
@@ -91,7 +134,7 @@ function ExcludedPluginsList({ search }: { search: string; }) {
         discordDesktop: "Discord Desktop app",
         vesktop: "Vesktop app",
         web: "Vesktop app and the Web version of Discord",
-        dev: "Developer version of Vencord"
+        dev: "Developer version of Swancord"
     };
 
     return (
@@ -196,7 +239,7 @@ function PluginSettings() {
         );
     };
 
-    const [newPlugins] = useAwaiter(() => DataStore.get("Vencord_existingPlugins").then((cachedPlugins: Record<string, number> | undefined) => {
+    const [newPlugins] = useAwaiter(() => DataStore.get("Swancord_existingPlugins").then((cachedPlugins: Record<string, number> | undefined) => {
         const now = Date.now() / 1000;
         const existingTimestamps: Record<string, number> = {};
         const sortedPluginNames = Object.values(sortedPlugins).map(plugin => plugin.name);
@@ -208,11 +251,13 @@ function PluginSettings() {
                 newPlugins.push(p);
             }
         }
-        DataStore.set("Vencord_existingPlugins", existingTimestamps);
+        DataStore.set("Swancord_existingPlugins", existingTimestamps);
 
         return lodash.isEqual(newPlugins, sortedPluginNames) ? [] : newPlugins;
     }));
 
+    const themePlugins = [] as JSX.Element[];
+    const swancordPlugins = [] as JSX.Element[];
     const plugins = [] as JSX.Element[];
     const requiredPlugins = [] as JSX.Element[];
 
@@ -224,10 +269,12 @@ function PluginSettings() {
         if (!pluginFilter(p)) continue;
 
         const isRequired = p.required || p.isDependency || depMap[p.name]?.some(d => settings.plugins[d].enabled);
+        const isSwancord = PluginMeta[p.name]?.swancordPlugin;
+        const isThemeControlled = (p as any).themeAddon === true;
 
         if (isRequired) {
             const tooltipText = p.required || !depMap[p.name]
-                ? "This plugin is required for Vencord to function."
+                ? "This plugin is required for Swancord to function."
                 : makeDependencyList(depMap[p.name]?.filter(d => settings.plugins[d].enabled));
 
             requiredPlugins.push(
@@ -243,6 +290,26 @@ function PluginSettings() {
                         />
                     )}
                 </Tooltip>
+            );
+        } else if (isThemeControlled) {
+            themePlugins.push(
+                <PluginCard
+                    onRestartNeeded={(name, key) => changes.handleChange(`${name}.${key}`)}
+                    disabled={false}
+                    plugin={p}
+                    isNew={newPlugins?.includes(p.name)}
+                    key={p.name}
+                />
+            );
+        } else if (isSwancord) {
+            swancordPlugins.push(
+                <PluginCard
+                    onRestartNeeded={(name, key) => changes.handleChange(`${name}.${key}`)}
+                    disabled={false}
+                    plugin={p}
+                    isNew={newPlugins?.includes(p.name)}
+                    key={p.name}
+                />
             );
         } else {
             plugins.push(
@@ -291,33 +358,43 @@ function PluginSettings() {
                 </div>
             </div>
 
-            <HeadingTertiary className={Margins.top20}>Plugins</HeadingTertiary>
-
-            {plugins.length || requiredPlugins.length
-                ? (
-                    <div className={cl("grid")}>
-                        {plugins.length
-                            ? plugins
-                            : <Paragraph>No plugins meet the search criteria.</Paragraph>
-                        }
-                    </div>
-                )
-                : <ExcludedPluginsList search={search} />
-            }
-
+            <CollapsibleSection title="Swancord-Native" defaultOpen={true} count={swancordPlugins.length} accentColor="rgba(255,255,255,0.55)">
+                {swancordPlugins.length
+                    ? <div className={cl("grid")}>{swancordPlugins}</div>
+                    : <Paragraph className={Margins.top16}>No Swancord plugins yet — add yours to <code>src/swancordplugins/</code></Paragraph>
+                }
+            </CollapsibleSection>
 
             <Divider className={Margins.top20} />
 
-            <HeadingTertiary className={classes(Margins.top20, Margins.bottom8)}>
-                Required Plugins
-            </HeadingTertiary>
-            <div className={cl("grid")}>
-                {requiredPlugins.length
-                    ? requiredPlugins
-                    : <Paragraph>No plugins meet the search criteria.</Paragraph>
+            <CollapsibleSection title="Vencord-Native" defaultOpen={true} count={plugins.length} accentColor="rgba(255,255,255,0.20)">
+                {plugins.length
+                    ? <div className={cl("grid")}>{plugins}</div>
+                    : <ExcludedPluginsList search={search} />
                 }
-            </div>
-        </SettingsTab >
+            </CollapsibleSection>
+
+            <Divider className={Margins.top20} />
+
+            {themePlugins.length > 0 && <>
+                <CollapsibleSection title="Theme-Addons" defaultOpen={true} count={themePlugins.length} accentColor="#9b8dff" tag="addon" tagColor="#9b8dff">
+                    <p className={cl("theme-note")}>Plugins designed to pair with specific themes.</p>
+                    <div className={cl("theme-controlled-section")}>
+                        <div className={cl("grid")} style={{ marginTop: 0 }}>{themePlugins}</div>
+                    </div>
+                </CollapsibleSection>
+                <Divider className={Margins.top20} />
+            </>}
+
+            <CollapsibleSection title="Required Plugins" defaultOpen={false} count={requiredPlugins.length} accentColor="rgba(255,255,255,0.10)">
+                <div className={cl("grid")}>
+                    {requiredPlugins.length
+                        ? requiredPlugins
+                        : <Paragraph>No plugins meet the search criteria.</Paragraph>
+                    }
+                </div>
+            </CollapsibleSection>
+        </SettingsTab>
     );
 }
 

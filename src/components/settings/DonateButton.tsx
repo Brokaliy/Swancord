@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 */
 
 import { Heart } from "@components/Heart";
-import { ButtonProps } from "@vencord/discord-types";
+import { ButtonProps } from "@swancord/discord-types";
 import { Button } from "@webpack/common";
 
 export default function DonateButton({
@@ -30,7 +30,7 @@ export default function DonateButton({
             {...props}
             look={look}
             color={color}
-            onClick={() => VencordNative.native.openExternal("https://github.com/sponsors/Vendicated")}
+            onClick={() => SwancordNative.native.openExternal("https://7n7.dev/donate")}
             className="vc-donate-button"
         >
             <Heart />

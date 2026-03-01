@@ -1,0 +1,285 @@
+/**
+ * @name Minimal Dark
+ * @description Stripped-back dark Discord — clean surfaces, no noise, no gradients.
+ * @author 7n7
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   DISCORD CSS VARIABLES
+   ═══════════════════════════════════════════════════════════════ */
+:root,
+.theme-dark,
+.theme-light {
+    /* 2025 base layer */
+    --background-base-lowest:  #111111;
+    --background-base-lower-2: #111111;
+    --background-base-lower-1: #141414;
+    --background-base-low:     #1a1a1a;
+    --background-base:         #1a1a1a;
+    --background-base-high:    #1e1e1e;
+    --background-base-higher:  #222222;
+    --background-base-highest: #272727;
+    --background-base-code:    #111111;
+
+    --background-mod-subtle:          rgba(255,255,255,0.025);
+    --background-mod-faint:           rgba(255,255,255,0.015);
+    --background-mod-strong:          rgba(255,255,255,0.055);
+    --background-mod-overlay-dimmer:  rgba(0,0,0,0.70);
+    --background-mod-overlay-terminal: rgba(0,0,0,0.85);
+
+    /* Surface system */
+    --background-surface-highest:   #2a2a2a;
+    --background-surface-high:      #242424;
+    --background-surface-medium:    #1e1e1e;
+    --background-surface-low:       #181818;
+    --background-surface-overlay:   rgba(26,26,26,0.96);
+
+    /* Legacy */
+    --background-primary:          #1a1a1a;
+    --background-secondary:        #141414;
+    --background-secondary-alt:    #111111;
+    --background-tertiary:         #0e0e0e;
+    --background-accent:           #5865f2;
+    --background-floating:         #1e1e1e;
+    --background-nested-floating:  #222222;
+    --background-mobile-primary:   #1a1a1a;
+    --background-mobile-secondary: #141414;
+
+    --channeltextarea-background:         #222222;
+    --chat-input-container-background:    #222222;
+    --deprecated-card-bg:                 #1a1a1a;
+    --deprecated-quickswitcher-input-background: #1a1a1a;
+    --home-background:                    #1a1a1a;
+
+    /* Text */
+    --text-normal:      #dcddde;
+    --text-muted:       rgba(220,221,222,0.40);
+    --text-link:        #7eb8f7;
+    --text-positive:    #57c48a;
+    --text-warning:     #e8b847;
+    --text-danger:      #e06c75;
+    --text-brand:       #7eb8f7;
+    --header-primary:   #e5e5e5;
+    --header-secondary: rgba(229,229,229,0.50);
+    --interactive-normal:  rgba(220,221,222,0.65);
+    --interactive-hover:   #e5e5e5;
+    --interactive-active:  #ffffff;
+    --interactive-muted:   rgba(220,221,222,0.22);
+
+    /* Modifiers */
+    --background-modifier-hover:    rgba(255,255,255,0.035);
+    --background-modifier-active:   rgba(255,255,255,0.06);
+    --background-modifier-selected: rgba(255,255,255,0.08);
+    --background-modifier-accent:   rgba(255,255,255,0.05);
+
+    /* Brand */
+    --brand-experiment:        #5865f2;
+    --brand-experiment-100:    rgba(88,101,242,0.10);
+    --brand-experiment-130:    rgba(88,101,242,0.13);
+    --brand-experiment-360:    #7eb8f7;
+    --brand-experiment-400:    #6b7af0;
+    --brand-experiment-500:    #5865f2;
+    --brand-experiment-530:    #4752c4;
+    --brand-500: #5865f2;
+    --brand-360: #7eb8f7;
+
+    /* Scrollbars */
+    --scrollbar-auto-thumb: rgba(255,255,255,0.09);
+    --scrollbar-auto-track: transparent;
+    --scrollbar-thin-thumb: rgba(255,255,255,0.09);
+    --scrollbar-thin-track: transparent;
+
+    /* Elevation */
+    --elevation-low:    0 1px 0 rgba(0,0,0,0.25);
+    --elevation-medium: 0 4px 12px rgba(0,0,0,0.55);
+    --elevation-high:   0 8px 24px rgba(0,0,0,0.75);
+    --elevation-stroke: 0 0 0 1px rgba(255,255,255,0.05);
+
+    /* Input / modal */
+    --input-background:        #1e1e1e;
+    --input-border:            rgba(255,255,255,0.07);
+    --input-border-hover:      rgba(255,255,255,0.12);
+    --input-border-focus:      rgba(88,101,242,0.55);
+    --modal-background:        #1a1a1a;
+    --modal-footer-background: #141414;
+    --mention-background:      rgba(88,101,242,0.10);
+    --mention-foreground:      #7eb8f7;
+
+    --channel-icon: rgba(255,255,255,0.28);
+    --focus-primary: rgba(88,101,242,0.55);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ELEMENT OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+
+html, body, #app-mount {
+    background: #111111 !important;
+    color-scheme: dark !important;
+}
+
+/* App shell */
+[class*="appMount"], [class*="app_"], [class*="baseLayer"],
+[class*="bg_"], [class*="layers_"], [class*="layer_"] {
+    background: #1a1a1a !important;
+}
+
+/* Chat / content */
+[class*="chat_"], [class*="chatContent_"],
+[class*="messagesWrapper"], [class*="messages_"],
+[class*="messagesWrapper_"], [class*="mainContent_"],
+[class*="chatLayerWrapper_"] {
+    background: #1a1a1a !important;
+}
+
+/* Channel sidebar */
+[class*="sidebar_"], [class*="channelsList_"],
+[class*="listScroller_"], [class*="privateChannels_"] {
+    background: #141414 !important;
+}
+
+/* Guild list */
+nav[class*="guilds_"], [class*="guildsList_"],
+[class*="guildsNav_"], [class*="scroller_"][class*="guild"] {
+    background: #111111 !important;
+}
+
+/* Member list */
+[class*="members_"], [class*="membersWrap_"],
+[class*="membersGroup_"] {
+    background: #141414 !important;
+}
+
+/* User panel */
+section[class*="panels_"], [class*="userPanel_"],
+[class*="userArea_"], [class*="accountProfileCard_"] {
+    background: #111111 !important;
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Message input */
+[class*="channelTextArea_"], [class*="textArea_"],
+[class*="slateContainer_"], [class*="form_"][class*="chat"] {
+    background: #222222 !important;
+}
+
+/* Channel header */
+[class*="header_"][class*="channel"], [class*="toolbar_"] {
+    background: #1a1a1a !important;
+    border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Popouts / context menus */
+[class*="popout_"], [class*="menu_"],
+[class*="tooltip_"], [class*="autocomplete_"] {
+    background: #1e1e1e !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+[class*="menu_"] {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.70) !important;
+}
+
+/* Modals */
+[class*="modal_"], [class*="modalRoot_"],
+[class*="modalContent_"], [class*="modalBody_"],
+[class*="root_"][class*="modal"] {
+    background: #1a1a1a !important;
+}
+
+[class*="footer_"][class*="modal"], [class*="modalFooter_"] {
+    background: #141414 !important;
+    border-top: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* Settings */
+[class*="sidebar_"][class*="settings"],
+[class*="standardSidebarView_"], [class*="sidebarRegion_"] {
+    background: #111111 !important;
+}
+
+[class*="contentRegion_"], [class*="content_"][class*="settings"] {
+    background: #1a1a1a !important;
+}
+
+/* Voice / video */
+[class*="callContainer_"], [class*="videoWrapper_"] {
+    background: #111111 !important;
+}
+
+/* Selected channel */
+[class*="selected_"][class*="channel"],
+[class*="selected_"][class*="wrapper_"] {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+/* Quick switcher */
+[class*="quickswitcher_"], [class*="searchResultsWrap_"] {
+    background: #1a1a1a !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.70) !important;
+}
+
+/* Cards */
+[class*="card_"], [class*="card-"], .card {
+    background: #1e1e1e !important;
+    border-color: rgba(255,255,255,0.05) !important;
+}
+
+/* Folder backgrounds */
+[class*="expandedFolderBackground_"] {
+    background: rgba(255,255,255,0.025) !important;
+    border-radius: 8px !important;
+}
+
+/* Reactions */
+[class*="reaction_"]:not([class*="reactionMe_"]) {
+    background: rgba(255,255,255,0.035) !important;
+    border-color: rgba(255,255,255,0.06) !important;
+}
+[class*="reactionMe_"] {
+    background: rgba(88,101,242,0.15) !important;
+    border-color: rgba(88,101,242,0.40) !important;
+}
+
+/* Dividers */
+[class*="divider_"] { border-color: rgba(255,255,255,0.05) !important; }
+
+/* Code blocks */
+code, pre, [class*="hljs"] {
+    background: #111111 !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    color: #d4d4d4 !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.09) !important;
+    border-radius: 4px !important;
+}
+::-webkit-scrollbar-track { background: transparent !important; }
+
+/* Embeds */
+[class*="embed_"] {
+    background: #1e1e1e !important;
+    border-left-color: #5865f2 !important;
+}
+
+/* Mentions */
+[class*="mentioned_"] {
+    background: rgba(88,101,242,0.07) !important;
+    border-left-color: #5865f2 !important;
+}
+
+/* Message hover */
+[class*="message_"]:hover {
+    background: rgba(255,255,255,0.02) !important;
+}
+
+/* Profile popout */
+[class*="userPopout_"], [class*="profileCard_"] {
+    background: #1a1a1a !important;
+}
+
+/* Nitro upsells — hide */
+[class*="premiumUpsell_"], [class*="nitroUpsell_"],
+[class*="premiumBanner_"] { display: none !important; }

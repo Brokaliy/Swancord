@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Swancord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,8 +22,23 @@ declare module "~plugins" {
     export const PluginMeta: Record<string, {
         folderName: string;
         userPlugin: boolean;
+        swancordPlugin: boolean;
     }>;
     export const ExcludedPlugins: Record<string, "web" | "discordDesktop" | "vesktop" | "desktop" | "dev">;
+}
+
+declare module "~swancord-themes" {
+    interface SwancordTheme {
+        id: string;
+        name: string;
+        description: string;
+        author: string;
+        css: string;
+        /** Optional companion JavaScript injected when the theme is enabled */
+        js?: string;
+    }
+    const themes: SwancordTheme[];
+    export default themes;
 }
 
 declare module "~git-hash" {
