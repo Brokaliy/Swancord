@@ -19,6 +19,7 @@
 import { addProfileBadge, BadgePosition, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
+import { UserStore } from "@webpack/common";
 
 // Hardcoded IDs that get the "Swancord" badge.
 // Add user IDs here for anyone who should have it.
@@ -127,6 +128,23 @@ const DonatorBadge: ProfileBadge = {
     onClick: () => window.open("https://7n7.dev/swancord/badges", "_blank"),
 };
 
+// Swancord user badge — shown on your own profile since the badge code
+// only runs inside Swancord; every Swancord user sees this on themselves.
+const SwancordUserBadge: ProfileBadge = {
+    description: "Swancord User",
+    iconSrc: "https://7n7.dev/badges/SwancordIcon.png",
+    position: BadgePosition.END,
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.85)",
+            filter: "hue-rotate(160deg) saturate(1.3)",
+        },
+    },
+    shouldShow: ({ userId }) => userId === UserStore.getCurrentUser()?.id,
+    onClick: () => window.open("https://7n7.dev/swancord", "_blank"),
+};
+
 // Personal 7n7 badge — only shown on the creator's profile
 const Personal7n7Badge: ProfileBadge = {
     description: "7n7 — 7n7.dev",
@@ -153,15 +171,17 @@ export default definePlugin({
     start() {
         // Registered in reverse rarity order — BadgePosition.START prepends,
         // so the last registered badge appears first on the profile.
-        addProfileBadge(BugHunterBadge);    // shown last
-        addProfileBadge(ContributorBadge);  // shown before hunter
-        addProfileBadge(DonatorBadge);      // shown before contributor
-        addProfileBadge(Ujc2Badge);         // shown third
-        addProfileBadge(SwancordBadge);     // shown second
+        addProfileBadge(SwancordUserBadge); // shown last (END position)
+        addProfileBadge(BugHunterBadge);
+        addProfileBadge(ContributorBadge);
+        addProfileBadge(DonatorBadge);
+        addProfileBadge(Ujc2Badge);
+        addProfileBadge(SwancordBadge);
         addProfileBadge(Personal7n7Badge);  // shown first
     },
 
     stop() {
+        removeProfileBadge(SwancordUserBadge);
         removeProfileBadge(BugHunterBadge);
         removeProfileBadge(ContributorBadge);
         removeProfileBadge(DonatorBadge);
