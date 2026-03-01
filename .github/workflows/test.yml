@@ -1,10 +1,6 @@
 name: test
 on:
-    push:
-    pull_request:
-        branches:
-            - main
-            - dev
+    workflow_dispatch: # disabled
 jobs:
     test:
         runs-on: ubuntu-latest

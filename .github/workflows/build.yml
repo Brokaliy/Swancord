@@ -1,8 +1,6 @@
 name: Build DevBuild
 on:
-    push:
-        branches:
-            - main
+    workflow_dispatch: # disabled — use swancord-release.yml instead
         paths:
             - .github/workflows/build.yml
             - src/**
