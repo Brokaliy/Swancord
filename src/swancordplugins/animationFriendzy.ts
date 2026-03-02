@@ -205,7 +205,7 @@ function onMessageCreate(event: any) {
         el.getAnimations().forEach(a => a.cancel());
         el.removeAttribute(ANIMATED_ATTR);
         el.setAttribute(ANIMATED_ATTR, "sent");
-        el.style.transformOrigin = "left bottom";
+        el.style.transformOrigin = "left center";
         el.style.overflow = "";
 
         const opts = getModuleOptions("sentMessage");
@@ -725,12 +725,17 @@ const settings = definePluginSettings({
     sendAnimKind: {
         type: OptionType.SELECT,
         description: "New-message / send pop-in animation style",
-        options: KINDS_OPTIONS.map((k, i) => ({ ...k, default: i === 3 })), // scale-bounce
+        options: KINDS_OPTIONS.map((k, i) => ({ ...k, default: i === 1 })), // slide
     },
     sendAnimEasing: {
         type: OptionType.SELECT,
         description: "Send animation easing",
-        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 2 })), // bouncy
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })), // smooth
+    },
+    sendAnimDir: {
+        type: OptionType.SELECT,
+        description: "Send animation slide direction",
+        options: DIR_OPTIONS.map((d, i) => ({ ...d, default: d.value === "right" })),
     },
 });
 
@@ -846,7 +851,7 @@ function getModuleOptions(id: ModuleId): { kind: AnimKind; easing: EasingName; d
                 kind: (s.messageKind     as AnimKind)    ?? "slide",
                 easing: (s.messageEasing as EasingName)  ?? globalE,
                 duration: Math.round(globalDur * 0.55),
-                dir: resolveDir((s.channelDir as string) ?? "auto"),
+                dir: "right",
             };
         case "modal":
             return { kind: (s.modalKind as AnimKind) ?? "scale", easing: (s.modalEasing as EasingName) ?? globalE, duration: fast, dir: "up" };
@@ -875,10 +880,10 @@ function getModuleOptions(id: ModuleId): { kind: AnimKind; easing: EasingName; d
             };
         case "sentMessage":
             return {
-                kind: (s.sendAnimKind as AnimKind) ?? "scale-bounce",
-                easing: (s.sendAnimEasing as EasingName) ?? "bouncy",
-                duration: Math.round(globalDur * 0.85),
-                dir: "up",
+                kind: (s.sendAnimKind as AnimKind) ?? "slide",
+                easing: (s.sendAnimEasing as EasingName) ?? "smooth",
+                duration: Math.round(globalDur * 0.75),
+                dir: (s.sendAnimDir as string) ?? "right",
             };
     }
 }
