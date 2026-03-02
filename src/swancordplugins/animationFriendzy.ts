@@ -1122,27 +1122,24 @@ function buildHoverCSS(): string {
     if (s.channelHoverAnim) {
         parts.push(`
 /* Channel rows — slide right + slight scale + icon pop */
-[class*="modeDefault_"] [class*="link_"],
-[class*="containerDefault_"][class*="channel_"] {
+[data-list-item-id^="channels___"] {
     transition:
-        transform       ${ms(vfast)} ${EO},
-        filter          ${ms(vfast)} ${EO},
-        background      ${ms(vfast)} ease !important;
+        transform  ${ms(vfast)} ${EO},
+        filter     ${ms(vfast)} ${EO},
+        background ${ms(vfast)} ease !important;
     will-change: transform, filter;
 }
-[class*="modeDefault_"] [class*="link_"]:hover,
-[class*="containerDefault_"][class*="channel_"]:hover {
+[data-list-item-id^="channels___"]:hover {
     transform: translateX(6px) scale(1.018) !important;
     filter: brightness(1.12) !important;
 }
-[class*="modeDefault_"] [class*="link_"]:active,
-[class*="containerDefault_"][class*="channel_"]:active {
+[data-list-item-id^="channels___"]:active {
     transform: translateX(3px) scale(0.98) !important;
     filter: brightness(1.0) !important;
 }
 /* Channel icon pop on hover */
-[class*="modeDefault_"] [class*="link_"]:hover [class*="icon_"],
-[class*="modeDefault_"] [class*="link_"]:hover [class*="iconContainer_"] {
+[data-list-item-id^="channels___"]:hover [class*="icon_"],
+[data-list-item-id^="channels___"]:hover [class*="iconContainer_"] {
     transform: scale(1.18) rotate(-8deg) !important;
     transition: transform ${ms(vfast)} ${EOb} !important;
 }`);
@@ -1176,25 +1173,25 @@ function buildHoverCSS(): string {
     if (s.vcHoverAnim) {
         parts.push(`
 /* Voice channel rows — scale + brighten + speaker icon pulse */
-[class*="containerVoice_"],
-[class*="channel_"][class*="voice_"],
-[data-list-item-id^="channels___"][class*="voice"] {
+[data-list-item-id^="channels___"][class*="voice"],
+[data-list-item-id^="channels___"][aria-label*="voice"],
+[data-list-item-id^="channels___"] [class*="containerVoice_"] {
     transition:
         transform  ${ms(vfast)} ${EO},
-        filter     ${ms(fast)}  ${EO},
-        box-shadow ${ms(fast)}  ${EO} !important;
+        filter     ${ms(fast)}  ${EO} !important;
     will-change: transform, filter;
 }
-[class*="containerVoice_"]:hover,
-[class*="channel_"][class*="voice_"]:hover {
+[data-list-item-id^="channels___"][class*="voice"]:hover,
+[data-list-item-id^="channels___"]:hover [class*="containerVoice_"] {
     transform: translateX(5px) scale(1.02) !important;
     filter: brightness(1.15) saturate(1.2) !important;
 }
-[class*="containerVoice_"]:active {
+[data-list-item-id^="channels___"][class*="voice"]:active,
+[data-list-item-id^="channels___"]:active [class*="containerVoice_"] {
     transform: translateX(2px) scale(0.97) !important;
 }
 /* Voice user avatars subtly pop on VC hover */
-[class*="containerVoice_"]:hover [class*="user_"] [class*="avatar_"] {
+[data-list-item-id^="channels___"]:hover [class*="user_"] [class*="avatar_"] {
     transform: scale(1.1) !important;
     transition: transform ${ms(vfast)} ${EOb} !important;
 }`);
