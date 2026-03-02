@@ -12,10 +12,17 @@ import definePlugin, { OptionType } from "@utils/types";
 // plus a distinct thunk sound on Enter/Backspace/Delete.
 
 const settings = definePluginSettings({
-    volume: {
+    typingVolume: {
         type: OptionType.SLIDER,
-        description: "Keystroke click volume (0.0 – 2.0)",
+        description: "Keystroke click volume (0.0 – 0.4)",
         default: 0.06,
+        markers: [0, 0.02, 0.05, 0.08, 0.1, 0.15, 0.2, 0.3, 0.4],
+        stickToMarkers: false,
+    },
+    sendVolume: {
+        type: OptionType.SLIDER,
+        description: "Send whoosh volume (0.0 – 2.0)",
+        default: 0.15,
         markers: [0, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0],
         stickToMarkers: false,
     },
@@ -57,7 +64,7 @@ function getCtx(): AudioContext {
 function playClick(heavy = false) {
     try {
         const ac    = getCtx();
-        const vol   = Math.max(0, settings.store.volume ?? 0.06);
+        const vol   = Math.max(0, settings.store.typingVolume ?? 0.06);
         const base  = settings.store.pitch ?? 1100;
         const vary  = settings.store.pitchVariance ? (Math.random() - 0.5) * 180 : 0;
         const freq  = heavy ? base * 0.45 : base + vary;
@@ -94,7 +101,7 @@ function playClick(heavy = false) {
 function playSend() {
     try {
         const ac   = getCtx();
-        const vol  = Math.max(0, settings.store.volume ?? 0.06) * 1.4;
+        const vol  = Math.max(0, settings.store.sendVolume ?? 0.15);
         const osc  = ac.createOscillator();
         const gain = ac.createGain();
 
