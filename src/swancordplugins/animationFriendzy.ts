@@ -191,8 +191,10 @@ function onChannelSelect(event: any) {
         dirState.direction = idx >= dirState.prevChannelIndex ? "forward" : "backward";
     }
     if (idx !== -1) dirState.prevChannelIndex = idx;
-    // Animate the chat area — Discord reuses it, MutationObserver never fires
+    // Animate the chat area wrapper
     animateChatArea();
+    // Re-animate recycled message nodes — Discord reuses them, MutationObserver never fires
+    setTimeout(animateVisibleMessages, 130);
 }
 
 function onGuildSelect(event: any) {
@@ -209,6 +211,7 @@ function onGuildSelect(event: any) {
     // Animate chat area and channel sidebar on guild switch
     animateChatArea();
     setTimeout(animateChannelList, 60);
+    setTimeout(animateVisibleMessages, 160);
 }
 
 // ─── Imperative channel / content animations ──────────────────────────────────
@@ -221,10 +224,12 @@ function animateChatArea() {
     if (shouldSkipReduceMotion()) return;
     const opts = getModuleOptions("channel");
     if (opts.kind === "none") return;
-    // Try several selectors — Discord sometimes uses different wrappers
-    const chatArea = document.querySelector<HTMLElement>(
-        "[class*='messagesWrapper_'], [class*='chatContent_'], [class*='content_'][class*='chat_']"
-    );
+    // Fallback chain — Discord renames classes; try each independently
+    const chatArea =
+        document.querySelector<HTMLElement>("[class*='messagesWrapper_']") ??
+        document.querySelector<HTMLElement>("[class*='chatContent_']") ??
+        document.querySelector<HTMLElement>("[class*='chat_'] [class*='content_']") ??
+        document.querySelector<HTMLElement>("[class*='scroller_'][role='list']");
     if (!chatArea) return;
     chatArea.style.transformOrigin = "center top";
     const frames = enterKeyframes(opts.kind, opts.dir);
@@ -234,6 +239,35 @@ function animateChatArea() {
         duration: opts.duration,
         easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
         fill: "backwards",
+    });
+}
+
+/**
+ * Stagger-animate the currently-visible message elements after a channel switch.
+ * Required because Discord RECYCLES message DOM nodes on channel switch —
+ * MutationObserver never fires for them, and they still carry data-af-animated
+ * from the previous channel. We clear the marker and re-animate directly.
+ */
+function animateVisibleMessages() {
+    if (shouldSkipReduceMotion()) return;
+    const opts = getModuleOptions("message");
+    if (opts.kind === "none") return;
+    const frames = enterKeyframes(opts.kind, opts.dir);
+    if (!frames.length) return;
+    const msgs = Array.from(document.querySelectorAll<HTMLElement>('[id^="chat-messages-"]'));
+    if (!msgs.length) return;
+    msgs.forEach((el, i) => {
+        if (i >= 25) return; // cap stagger depth
+        el.removeAttribute(ANIMATED_ATTR);
+        el.setAttribute(ANIMATED_ATTR, "1");
+        el.style.transformOrigin = "center top";
+        el.getAnimations().forEach(a => a.cancel());
+        el.animate(frames, {
+            duration: opts.duration,
+            delay: Math.min(i * 18, 300),
+            easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
+            fill: "backwards",
+        });
     });
 }
 
