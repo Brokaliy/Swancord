@@ -191,6 +191,8 @@ function onChannelSelect(event: any) {
         dirState.direction = idx >= dirState.prevChannelIndex ? "forward" : "backward";
     }
     if (idx !== -1) dirState.prevChannelIndex = idx;
+    // Animate the chat area — Discord reuses it, MutationObserver never fires
+    animateChatArea();
 }
 
 function onGuildSelect(event: any) {
@@ -204,6 +206,69 @@ function onGuildSelect(event: any) {
         dirState.direction = idx >= dirState.prevGuildIndex ? "forward" : "backward";
     }
     if (idx !== -1) dirState.prevGuildIndex = idx;
+    // Animate chat area and channel sidebar on guild switch
+    animateChatArea();
+    setTimeout(animateChannelList, 60);
+}
+
+// ─── Imperative channel / content animations ──────────────────────────────────
+
+/**
+ * Animate the chat content area that Discord REUSES on every channel switch.
+ * MutationObserver never sees it because it's never removed/added.
+ */
+function animateChatArea() {
+    if (shouldSkipReduceMotion()) return;
+    const opts = getModuleOptions("channel");
+    if (opts.kind === "none") return;
+    // Try several selectors — Discord sometimes uses different wrappers
+    const chatArea = document.querySelector<HTMLElement>(
+        "[class*='messagesWrapper_'], [class*='chatContent_'], [class*='content_'][class*='chat_']"
+    );
+    if (!chatArea) return;
+    chatArea.style.transformOrigin = "center top";
+    const frames = enterKeyframes(opts.kind, opts.dir);
+    if (!frames.length) return;
+    chatArea.getAnimations().forEach(a => a.cancel());
+    chatArea.animate(frames, {
+        duration: opts.duration,
+        easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
+        fill: "backwards",
+    });
+}
+
+/** Animate the channel list rows in the sidebar (staggered) */
+function animateChannelList() {
+    if (shouldSkipReduceMotion()) return;
+    const rows = document.querySelectorAll<HTMLElement>(
+        "[data-list-item-id^='channels___']"
+    );
+    rows.forEach((row, i) => {
+        row.getAnimations().forEach(a => a.cancel());
+        row.animate([
+            { opacity: 0, transform: "translateX(-10px)" },
+            { opacity: 1, transform: "translateX(0)" },
+        ], {
+            duration: 180,
+            delay: Math.min(i * 14, 200),
+            easing: EasingCSS.smooth,
+            fill: "backwards",
+        });
+    });
+}
+
+/** Click feedback pulse on a channel row when the user selects it */
+function onChannelClickAF(e: MouseEvent) {
+    const row = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-list-item-id^='channels___']"
+    );
+    if (!row) return;
+    row.getAnimations().forEach(a => a.cancel());
+    row.animate([
+        { transform: "scale(1)" },
+        { transform: "scale(0.97)", offset: 0.3 },
+        { transform: "scale(1)" },
+    ], { duration: 180, easing: EasingCSS.bouncy, fill: "none" });
 }
 
 // ─── Voice channel switch animation ──────────────────────────────────────────
@@ -397,7 +462,7 @@ const settings = definePluginSettings({
     messageEasing: {
         type: OptionType.SELECT,
         description: "Message animation easing",
-        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 2 })),
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })),
     },
     messageViewportOnly: {
         type: OptionType.BOOLEAN,
@@ -419,7 +484,7 @@ const settings = definePluginSettings({
     modalEasing: {
         type: OptionType.SELECT,
         description: "Modal easing",
-        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 1 })),
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })),
     },
 
     // ── Context menu ──────────────────────────
@@ -431,7 +496,7 @@ const settings = definePluginSettings({
     contextEasing: {
         type: OptionType.SELECT,
         description: "Context menu easing",
-        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 2 })),
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })),
     },
 
     // ── Profile popouts ───────────────────────
@@ -443,7 +508,7 @@ const settings = definePluginSettings({
     profileEasing: {
         type: OptionType.SELECT,
         description: "Profile easing",
-        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 2 })),
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })),
     },
 
     // ── Sidebars ──────────────────────────────
@@ -609,16 +674,16 @@ function getModuleOptions(id: ModuleId): { kind: AnimKind; easing: EasingName; d
         case "message":
             return {
                 kind: (s.messageKind     as AnimKind)    ?? "slide",
-                easing: (s.messageEasing as EasingName)  ?? "bouncy",
+                easing: (s.messageEasing as EasingName)  ?? globalE,
                 duration: Math.round(globalDur * 0.55),
                 dir: resolveDir((s.channelDir as string) ?? "auto"),
             };
         case "modal":
-            return { kind: (s.modalKind as AnimKind) ?? "scale", easing: (s.modalEasing as EasingName) ?? "snappy", duration: fast, dir: "up" };
+            return { kind: (s.modalKind as AnimKind) ?? "scale", easing: (s.modalEasing as EasingName) ?? globalE, duration: fast, dir: "up" };
         case "contextMenu":
-            return { kind: (s.contextKind as AnimKind) ?? "scale-bounce", easing: (s.contextEasing as EasingName) ?? "bouncy", duration: vfast, dir: "up" };
+            return { kind: (s.contextKind as AnimKind) ?? "scale-bounce", easing: (s.contextEasing as EasingName) ?? globalE, duration: vfast, dir: "up" };
         case "profile":
-            return { kind: (s.profileKind as AnimKind) ?? "scale-bounce", easing: (s.profileEasing as EasingName) ?? "bouncy", duration: fast, dir: "up" };
+            return { kind: (s.profileKind as AnimKind) ?? "scale-bounce", easing: (s.profileEasing as EasingName) ?? globalE, duration: fast, dir: "up" };
         case "sidebar":
             return { kind: (s.sidebarKind as AnimKind) ?? "slide", easing: (s.sidebarEasing as EasingName) ?? "smooth", duration: fast, dir: resolveDir((s.sidebarDir as string) ?? "right") };
         case "tooltip":
@@ -909,6 +974,7 @@ export default definePlugin({
         document.addEventListener("contextmenu", onContextMenu, true);
         document.addEventListener("dragstart", onDragStartAF, true);
         document.addEventListener("dragend",   onDragEndAF,   true);
+        document.addEventListener("click",     onChannelClickAF, true);
         FluxDispatcher.subscribe("CHANNEL_SELECT",      onChannelSelect);
         FluxDispatcher.subscribe("GUILD_SELECT",        onGuildSelect);
         FluxDispatcher.subscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
@@ -928,6 +994,7 @@ export default definePlugin({
         document.removeEventListener("contextmenu", onContextMenu, true);
         document.removeEventListener("dragstart", onDragStartAF, true);
         document.removeEventListener("dragend",   onDragEndAF,   true);
+        document.removeEventListener("click",     onChannelClickAF, true);
         FluxDispatcher.unsubscribe("CHANNEL_SELECT",      onChannelSelect);
         FluxDispatcher.unsubscribe("GUILD_SELECT",        onGuildSelect);
         FluxDispatcher.unsubscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
