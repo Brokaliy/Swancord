@@ -183,18 +183,36 @@ function resolveDir(raw: string): string {
 function onChannelSelect(event: any) {
     const channelId: string = event?.channelId ?? "";
     if (!channelId) return;
-    const items = Array.from(
-        document.querySelectorAll<HTMLElement>("[data-list-item-id^='channels___']")
-    );
-    const idx = items.findIndex(el => el.dataset.listItemId?.endsWith(channelId));
-    if (idx !== -1 && dirState.prevChannelIndex !== -1) {
-        dirState.direction = idx >= dirState.prevChannelIndex ? "forward" : "backward";
+    const isDM = !event?.guildId;
+
+    if (isDM) {
+        // ── DM / group DM switch ─────────────────────────────────────────
+        const dmItems = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-list-item-id^='private-channels-']")
+        );
+        const dmIdx = dmItems.findIndex(el => el.dataset.listItemId?.endsWith(channelId));
+        if (dmIdx !== -1 && dirState.prevChannelIndex !== -1) {
+            dirState.direction = dmIdx >= dirState.prevChannelIndex ? "forward" : "backward";
+        }
+        if (dmIdx !== -1) dirState.prevChannelIndex = dmIdx;
+
+        animateChatAreaForModule("dm");
+        if (settings.store.dmListAnim) setTimeout(() => animateDMList(channelId), 40);
+        setTimeout(animateVisibleMessages, 200);
+    } else {
+        // ── Guild channel switch ──────────────────────────────────────────
+        const items = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-list-item-id^='channels___']")
+        );
+        const idx = items.findIndex(el => el.dataset.listItemId?.endsWith(channelId));
+        if (idx !== -1 && dirState.prevChannelIndex !== -1) {
+            dirState.direction = idx >= dirState.prevChannelIndex ? "forward" : "backward";
+        }
+        if (idx !== -1) dirState.prevChannelIndex = idx;
+
+        animateChatAreaForModule("channel");
+        setTimeout(animateVisibleMessages, 200);
     }
-    if (idx !== -1) dirState.prevChannelIndex = idx;
-    // Animate the chat area wrapper
-    animateChatArea();
-    // Re-animate recycled message nodes — Discord reuses them, MutationObserver never fires
-    setTimeout(animateVisibleMessages, 130);
 }
 
 function onGuildSelect(event: any) {
@@ -217,12 +235,12 @@ function onGuildSelect(event: any) {
 // ─── Imperative channel / content animations ──────────────────────────────────
 
 /**
- * Animate the chat content area that Discord REUSES on every channel switch.
- * MutationObserver never sees it because it's never removed/added.
+ * Animate the chat content area. Accepts a module id so DMs use their own settings.
+ * Discord REUSES this element on every channel switch — MutationObserver never fires.
  */
-function animateChatArea() {
+function animateChatAreaForModule(moduleId: "channel" | "dm") {
     if (shouldSkipReduceMotion()) return;
-    const opts = getModuleOptions("channel");
+    const opts = getModuleOptions(moduleId);
     if (opts.kind === "none") return;
     // Fallback chain — Discord renames classes; try each independently
     const chatArea =
@@ -242,11 +260,13 @@ function animateChatArea() {
     });
 }
 
+/** Legacy alias kept for onGuildSelect */
+function animateChatArea() { animateChatAreaForModule("channel"); }
+
 /**
- * Stagger-animate the currently-visible message elements after a channel switch.
- * Required because Discord RECYCLES message DOM nodes on channel switch —
- * MutationObserver never fires for them, and they still carry data-af-animated
- * from the previous channel. We clear the marker and re-animate directly.
+ * Stagger-animate the currently-visible message elements after a channel/DM switch.
+ * Required because Discord RECYCLES message DOM nodes — MutationObserver never fires,
+ * and elements still carry data-af-animated from the previous channel.
  */
 function animateVisibleMessages() {
     if (shouldSkipReduceMotion()) return;
@@ -254,24 +274,30 @@ function animateVisibleMessages() {
     if (opts.kind === "none") return;
     const frames = enterKeyframes(opts.kind, opts.dir);
     if (!frames.length) return;
-    const msgs = Array.from(document.querySelectorAll<HTMLElement>('[id^="chat-messages-"]'));
+    // Try stable ID-based selector first, fall back to class-based
+    let msgs = Array.from(document.querySelectorAll<HTMLElement>('[id^="chat-messages-"]'));
+    if (!msgs.length) {
+        msgs = Array.from(document.querySelectorAll<HTMLElement>(
+            "[class*='messageListItem_'], [class*='message_'][class*='groupStart_']"
+        ));
+    }
     if (!msgs.length) return;
     msgs.forEach((el, i) => {
-        if (i >= 25) return; // cap stagger depth
+        if (i >= 30) return; // cap stagger depth
         el.removeAttribute(ANIMATED_ATTR);
         el.setAttribute(ANIMATED_ATTR, "1");
         el.style.transformOrigin = "center top";
         el.getAnimations().forEach(a => a.cancel());
         el.animate(frames, {
             duration: opts.duration,
-            delay: Math.min(i * 18, 300),
+            delay: Math.min(i * 16, 320),
             easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
             fill: "backwards",
         });
     });
 }
 
-/** Animate the channel list rows in the sidebar (staggered) */
+/** Animate the channel list rows in the sidebar — staggered slide + overshoot bounce */
 function animateChannelList() {
     if (shouldSkipReduceMotion()) return;
     const rows = document.querySelectorAll<HTMLElement>(
@@ -280,29 +306,53 @@ function animateChannelList() {
     rows.forEach((row, i) => {
         row.getAnimations().forEach(a => a.cancel());
         row.animate([
-            { opacity: 0, transform: "translateX(-10px)" },
-            { opacity: 1, transform: "translateX(0)" },
+            { opacity: 0,   transform: "translateX(-16px) scale(0.93)" },
+            { opacity: 0.8, transform: "translateX(3px)   scale(1.02)", offset: 0.72 },
+            { opacity: 1,   transform: "translateX(0)     scale(1)" },
         ], {
-            duration: 180,
-            delay: Math.min(i * 14, 200),
+            duration: 240,
+            delay: Math.min(i * 15, 260),
             easing: EasingCSS.smooth,
             fill: "backwards",
         });
     });
 }
 
-/** Click feedback pulse on a channel row when the user selects it */
+/** Animate the DM list sidebar — staggered slide + subtle grow */
+function animateDMList(selectedChannelId?: string) {
+    if (shouldSkipReduceMotion()) return;
+    const rows = document.querySelectorAll<HTMLElement>(
+        "[data-list-item-id^='private-channels-']"
+    );
+    rows.forEach((row, i) => {
+        row.getAnimations().forEach(a => a.cancel());
+        const isSelected = !!selectedChannelId && !!row.dataset.listItemId?.endsWith(selectedChannelId);
+        row.animate([
+            { opacity: 0,   transform: "translateX(-14px) scale(0.94)" },
+            { opacity: 0.85, transform: `translateX(${isSelected ? "4px" : "2px"}) scale(${isSelected ? "1.04" : "1.01"})`, offset: 0.7 },
+            { opacity: 1,   transform: "translateX(0) scale(1)" },
+        ], {
+            duration: isSelected ? 300 : 220,
+            delay: Math.min(i * 18, 280),
+            easing: EasingCSS.smooth,
+            fill: "backwards",
+        });
+    });
+}
+
+/** Click feedback pulse on a channel or DM row when the user selects it */
 function onChannelClickAF(e: MouseEvent) {
     const row = (e.target as HTMLElement).closest<HTMLElement>(
-        "[data-list-item-id^='channels___']"
+        "[data-list-item-id^='channels___'], [data-list-item-id^='private-channels-']"
     );
     if (!row) return;
     row.getAnimations().forEach(a => a.cancel());
     row.animate([
         { transform: "scale(1)" },
-        { transform: "scale(0.97)", offset: 0.3 },
+        { transform: "scale(0.96)", offset: 0.35 },
+        { transform: "scale(1.015)", offset: 0.75 },
         { transform: "scale(1)" },
-    ], { duration: 180, easing: EasingCSS.bouncy, fill: "none" });
+    ], { duration: 220, easing: EasingCSS.bouncy, fill: "none" });
 }
 
 // ─── Voice channel switch animation ──────────────────────────────────────────
@@ -596,13 +646,35 @@ const settings = definePluginSettings({
         description: "Toast notification animation",
         options: KINDS_OPTIONS.map((k, i) => ({ ...k, default: i === 1 })),
     },
+
+    // ── DMs ───────────────────────────────────
+    dmKind: {
+        type: OptionType.SELECT,
+        description: "DM / group DM content switch animation",
+        options: KINDS_OPTIONS.map((k, i) => ({ ...k, default: i === 9 })), // blur default
+    },
+    dmEasing: {
+        type: OptionType.SELECT,
+        description: "DM switch easing",
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 0 })),
+    },
+    dmDir: {
+        type: OptionType.SELECT,
+        description: "DM switch direction (for Slide / Wipe)",
+        options: DIR_OPTIONS.map((d, i) => ({ ...d, default: i === 0 })),
+    },
+    dmListAnim: {
+        type: OptionType.BOOLEAN,
+        description: "Animate the DM list sidebar when switching DMs",
+        default: true,
+    },
 });
 
 // ─── Element classifier ───────────────────────────────────────────────────────
 
 type ModuleId =
     | "channel" | "message" | "modal" | "contextMenu" | "profile"
-    | "sidebar" | "tooltip" | "settings" | "picker" | "autocomplete" | "toast";
+    | "sidebar" | "tooltip" | "settings" | "picker" | "autocomplete" | "toast" | "dm";
 
 interface ModuleConfig {
     id: ModuleId;
@@ -730,6 +802,13 @@ function getModuleOptions(id: ModuleId): { kind: AnimKind; easing: EasingName; d
             return { kind: (s.autocompleteKind as AnimKind) ?? "slide", easing: globalE, duration: vfast, dir: "up" };
         case "toast":
             return { kind: (s.toastKind as AnimKind) ?? "slide", easing: globalE, duration: vfast, dir: "down" };
+        case "dm":
+            return {
+                kind: (s.dmKind as AnimKind) ?? "blur",
+                easing: (s.dmEasing as EasingName) ?? globalE,
+                duration: globalDur,
+                dir: resolveDir((s.dmDir as string) ?? "auto"),
+            };
     }
 }
 
