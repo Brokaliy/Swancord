@@ -11,14 +11,18 @@ import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const settings = definePluginSettings({
     volume: {
-        type: OptionType.NUMBER,
-        description: "Click volume (0.0 to 1.0, default: 0.08)",
+        type: OptionType.SLIDER,
+        description: "Click volume (0.0 to 1.0)",
         default: 0.08,
+        markers: [0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1.0],
+        stickToMarkers: false,
     },
     frequency: {
-        type: OptionType.NUMBER,
-        description: "Click pitch in Hz (default: 900)",
+        type: OptionType.SLIDER,
+        description: "Click pitch in Hz",
         default: 900,
+        markers: [200, 400, 600, 800, 900, 1000, 1200, 1600, 2000],
+        stickToMarkers: false,
     },
 });
 
