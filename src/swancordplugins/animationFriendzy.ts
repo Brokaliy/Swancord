@@ -237,15 +237,11 @@ const DRAG_CLASS    = "af-dragging";
 const DRAG_CSS = `
 .af-dragging {
     opacity: 0.75 !important;
-    transform: scale(1.05) rotate(1.5deg) !important;
     box-shadow: 0 10px 28px rgba(0,0,0,0.4) !important;
     z-index: 999 !important;
     transition: none !important;
     border-radius: 6px !important;
     cursor: grabbing !important;
-}
-[data-list-item-id^="channels___"]:not(.af-dragging) {
-    transition: transform 170ms cubic-bezier(0.16, 1, 0.3, 1), opacity 170ms ease !important;
 }
 `;
 
@@ -254,11 +250,14 @@ function onDragStartAF(e: DragEvent) {
         "[data-list-item-id^='channels___'], [class*='containerDefault_']"
     );
     if (!target) return;
+    // Cancel any existing WAAPI before starting a new one
+    target.getAnimations().forEach(a => a.cancel());
     target.classList.add(DRAG_CLASS);
+    // fill:"none" — the CSS class owns the lifted visual; WAAPI only plays the liftup transition
     target.animate([
         { transform: "scale(1) rotate(0deg)", opacity: 1 },
         { transform: "scale(1.05) rotate(1.5deg)", opacity: 0.75 },
-    ], { duration: 130, easing: EasingCSS.snappy, fill: "forwards" });
+    ], { duration: 130, easing: EasingCSS.snappy, fill: "none" });
 }
 
 function onDragEndAF(e: DragEvent) {
@@ -267,10 +266,21 @@ function onDragEndAF(e: DragEvent) {
     );
     if (!target) return;
     target.classList.remove(DRAG_CLASS);
-    target.animate([
+    // Cancel all running WAAPI (clears any fill:forwards from dragstart)
+    target.getAnimations().forEach(a => a.cancel());
+    // Clear any inline transform/opacity left by a cancelled animation
+    target.style.transform = "";
+    target.style.opacity = "";
+    const anim = target.animate([
         { transform: "scale(1.05) rotate(1.5deg)", opacity: 0.75 },
         { transform: "scale(1) rotate(0deg)",      opacity: 1 },
-    ], { duration: 220, easing: EasingCSS.bouncy, fill: "none" });
+    ], { duration: 220, easing: EasingCSS.bouncy, fill: "forwards" });
+    // Once snap-back finishes, fully clear inline styles so CSS takes over cleanly
+    anim.onfinish = () => {
+        anim.cancel();
+        target.style.transform = "";
+        target.style.opacity = "";
+    };
 }
 
 function injectDragCSS() {
