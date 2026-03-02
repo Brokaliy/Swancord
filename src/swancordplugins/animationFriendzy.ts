@@ -551,9 +551,19 @@ const settings = definePluginSettings({
         description: "Scale + rotate server icons on hover",
         default: true,
     },
-    channelHoverSlide: {
+    channelHoverAnim: {
         type: OptionType.BOOLEAN,
-        description: "Slide channel rows right on hover",
+        description: "Slide + scale channel rows on hover with a soft glow",
+        default: true,
+    },
+    dmHoverAnim: {
+        type: OptionType.BOOLEAN,
+        description: "Slide + scale DM rows on hover",
+        default: true,
+    },
+    vcHoverAnim: {
+        type: OptionType.BOOLEAN,
+        description: "Scale + brighten voice channel rows on hover",
         default: true,
     },
 
@@ -1086,15 +1096,17 @@ function onContextMenu(e: MouseEvent) {
 function buildHoverCSS(): string {
     const s = settings.store;
     const globalDur = Math.max(40, Math.min(1500, s.duration ?? 220));
-    const vfast = Math.round(globalDur * 0.50);
-    const EO = EasingCSS.bouncy;
+    const vfast = Math.round(globalDur * 0.45);
+    const fast  = Math.round(globalDur * 0.55);
+    const EO  = EasingCSS.smooth;
+    const EOb = EasingCSS.bouncy;
     const parts: string[] = [];
 
     if (s.serverIconHover) {
         parts.push(`
 [class*="listItem_"] [class*="wrapper_"][class*="guild_"],
 [class*="blobContainer_"] > * {
-    transition: transform ${ms(vfast)} ${EO} !important;
+    transition: transform ${ms(vfast)} ${EOb} !important;
     will-change: transform;
 }
 [class*="listItem_"]:hover [class*="wrapper_"][class*="guild_"],
@@ -1107,14 +1119,84 @@ function buildHoverCSS(): string {
 }`);
     }
 
-    if (s.channelHoverSlide) {
+    if (s.channelHoverAnim) {
         parts.push(`
+/* Channel rows — slide right + slight scale + icon pop */
 [class*="modeDefault_"] [class*="link_"],
-[class*="link_"][class*="channel_"] {
-    transition: padding-left ${ms(vfast)} ${EO}, background ${ms(vfast)} ease !important;
+[class*="containerDefault_"][class*="channel_"] {
+    transition:
+        transform       ${ms(vfast)} ${EO},
+        filter          ${ms(vfast)} ${EO},
+        background      ${ms(vfast)} ease !important;
+    will-change: transform, filter;
 }
-[class*="modeDefault_"] [class*="link_"]:hover {
-    padding-left: 14px !important;
+[class*="modeDefault_"] [class*="link_"]:hover,
+[class*="containerDefault_"][class*="channel_"]:hover {
+    transform: translateX(6px) scale(1.018) !important;
+    filter: brightness(1.12) !important;
+}
+[class*="modeDefault_"] [class*="link_"]:active,
+[class*="containerDefault_"][class*="channel_"]:active {
+    transform: translateX(3px) scale(0.98) !important;
+    filter: brightness(1.0) !important;
+}
+/* Channel icon pop on hover */
+[class*="modeDefault_"] [class*="link_"]:hover [class*="icon_"],
+[class*="modeDefault_"] [class*="link_"]:hover [class*="iconContainer_"] {
+    transform: scale(1.18) rotate(-8deg) !important;
+    transition: transform ${ms(vfast)} ${EOb} !important;
+}`);
+    }
+
+    if (s.dmHoverAnim) {
+        parts.push(`
+/* DM rows — slide + scale + avatar pop */
+[data-list-item-id^="private-channels-"] {
+    transition:
+        transform  ${ms(vfast)} ${EO},
+        filter     ${ms(vfast)} ${EO},
+        background ${ms(vfast)} ease !important;
+    will-change: transform;
+}
+[data-list-item-id^="private-channels-"]:hover {
+    transform: translateX(5px) scale(1.022) !important;
+    filter: brightness(1.10) !important;
+}
+[data-list-item-id^="private-channels-"]:active {
+    transform: translateX(2px) scale(0.975) !important;
+}
+/* Avatar zoom on DM hover */
+[data-list-item-id^="private-channels-"]:hover [class*="avatar_"],
+[data-list-item-id^="private-channels-"]:hover [class*="avatarContainer_"] {
+    transform: scale(1.14) !important;
+    transition: transform ${ms(vfast)} ${EOb} !important;
+}`);
+    }
+
+    if (s.vcHoverAnim) {
+        parts.push(`
+/* Voice channel rows — scale + brighten + speaker icon pulse */
+[class*="containerVoice_"],
+[class*="channel_"][class*="voice_"],
+[data-list-item-id^="channels___"][class*="voice"] {
+    transition:
+        transform  ${ms(vfast)} ${EO},
+        filter     ${ms(fast)}  ${EO},
+        box-shadow ${ms(fast)}  ${EO} !important;
+    will-change: transform, filter;
+}
+[class*="containerVoice_"]:hover,
+[class*="channel_"][class*="voice_"]:hover {
+    transform: translateX(5px) scale(1.02) !important;
+    filter: brightness(1.15) saturate(1.2) !important;
+}
+[class*="containerVoice_"]:active {
+    transform: translateX(2px) scale(0.97) !important;
+}
+/* Voice user avatars subtly pop on VC hover */
+[class*="containerVoice_"]:hover [class*="user_"] [class*="avatar_"] {
+    transform: scale(1.1) !important;
+    transition: transform ${ms(vfast)} ${EOb} !important;
 }`);
     }
 
@@ -1122,7 +1204,7 @@ function buildHoverCSS(): string {
     parts.push(`
 [class*="numberBadge_"],
 [class*="badge_"] {
-    transition: transform ${ms(vfast)} ${EO}, opacity ${ms(vfast)} ease !important;
+    transition: transform ${ms(vfast)} ${EOb}, opacity ${ms(vfast)} ease !important;
 }`);
 
     if (s.respectReduceMotion) {
