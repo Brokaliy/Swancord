@@ -180,6 +180,45 @@ function resolveDir(raw: string): string {
     return dirState.direction === "backward" ? "down" : "up";
 }
 
+/** Clear data-af-animated from all message-level elements so the next pass re-animates them */
+function clearMessageAnimMarkers() {
+    document.querySelectorAll<HTMLElement>(
+        `[id^="chat-messages-"][${ANIMATED_ATTR}], [class*="messageListItem_"][${ANIMATED_ATTR}]`
+    ).forEach(el => el.removeAttribute(ANIMATED_ATTR));
+}
+
+/** Handle a new incoming message — plays the dedicated send/receive pop-in animation */
+function onMessageCreate(event: any) {
+    if (!settings.store.sendAnim) return;
+    if (shouldSkipReduceMotion()) return;
+    const msgId = event?.message?.id;
+    const channelId = event?.channelId ?? event?.message?.channel_id;
+    if (!msgId || !channelId) return;
+
+    // Wait for Discord to render the element
+    setTimeout(() => {
+        const el = document.querySelector<HTMLElement>(
+            `[id="chat-messages-${channelId}-${msgId}"]`
+        );
+        if (!el) return;
+        // Override whatever the MO played — send animation takes priority
+        el.getAnimations().forEach(a => a.cancel());
+        el.removeAttribute(ANIMATED_ATTR);
+        el.setAttribute(ANIMATED_ATTR, "sent");
+        el.style.transformOrigin = "left bottom";
+        el.style.overflow = "";
+
+        const opts = getModuleOptions("sentMessage");
+        const frames = enterKeyframes(opts.kind, opts.dir);
+        if (!frames.length) return;
+        el.animate(frames, {
+            duration: opts.duration,
+            easing: EasingCSS[opts.easing] ?? EasingCSS.bouncy,
+            fill: "backwards",
+        });
+    }, 80);
+}
+
 function onChannelSelect(event: any) {
     const channelId: string = event?.channelId ?? "";
     if (!channelId) return;
@@ -198,7 +237,10 @@ function onChannelSelect(event: any) {
 
         animateChatAreaForModule("dm");
         if (settings.store.dmListAnim) setTimeout(() => animateDMList(channelId), 40);
-        setTimeout(animateVisibleMessages, 200);
+        // Clear markers immediately so both the MO and the polling passes can re-animate
+        clearMessageAnimMarkers();
+        setTimeout(animateVisibleMessages, 60);   // fast path: cached channels
+        setTimeout(animateVisibleMessages, 350);  // slow path: network-loaded channels
     } else {
         // ── Guild channel switch ──────────────────────────────────────────
         const items = Array.from(
@@ -211,7 +253,10 @@ function onChannelSelect(event: any) {
         if (idx !== -1) dirState.prevChannelIndex = idx;
 
         animateChatAreaForModule("channel");
-        setTimeout(animateVisibleMessages, 200);
+        // Clear markers immediately so both the MO and the polling passes can re-animate
+        clearMessageAnimMarkers();
+        setTimeout(animateVisibleMessages, 60);   // fast path: cached channels
+        setTimeout(animateVisibleMessages, 350);  // slow path: network-loaded channels
     }
 }
 
@@ -229,7 +274,9 @@ function onGuildSelect(event: any) {
     // Animate chat area and channel sidebar on guild switch
     animateChatArea();
     setTimeout(animateChannelList, 60);
-    setTimeout(animateVisibleMessages, 160);
+    clearMessageAnimMarkers();
+    setTimeout(animateVisibleMessages, 80);
+    setTimeout(animateVisibleMessages, 380);
 }
 
 // ─── Imperative channel / content animations ──────────────────────────────────
@@ -668,13 +715,30 @@ const settings = definePluginSettings({
         description: "Animate the DM list sidebar when switching DMs",
         default: true,
     },
+
+    // ── Send / new message animation ──────────────────────
+    sendAnim: {
+        type: OptionType.BOOLEAN,
+        description: "Play a distinct pop-in animation when a new message appears (yours or others)",
+        default: true,
+    },
+    sendAnimKind: {
+        type: OptionType.SELECT,
+        description: "New-message / send pop-in animation style",
+        options: KINDS_OPTIONS.map((k, i) => ({ ...k, default: i === 3 })), // scale-bounce
+    },
+    sendAnimEasing: {
+        type: OptionType.SELECT,
+        description: "Send animation easing",
+        options: EASING_OPTIONS.map((e, i) => ({ ...e, default: i === 2 })), // bouncy
+    },
 });
 
 // ─── Element classifier ───────────────────────────────────────────────────────
 
 type ModuleId =
     | "channel" | "message" | "modal" | "contextMenu" | "profile"
-    | "sidebar" | "tooltip" | "settings" | "picker" | "autocomplete" | "toast" | "dm";
+    | "sidebar" | "tooltip" | "settings" | "picker" | "autocomplete" | "toast" | "dm" | "sentMessage";
 
 interface ModuleConfig {
     id: ModuleId;
@@ -808,6 +872,13 @@ function getModuleOptions(id: ModuleId): { kind: AnimKind; easing: EasingName; d
                 easing: (s.dmEasing as EasingName) ?? globalE,
                 duration: globalDur,
                 dir: resolveDir((s.dmDir as string) ?? "auto"),
+            };
+        case "sentMessage":
+            return {
+                kind: (s.sendAnimKind as AnimKind) ?? "scale-bounce",
+                easing: (s.sendAnimEasing as EasingName) ?? "bouncy",
+                duration: Math.round(globalDur * 0.85),
+                dir: "up",
             };
     }
 }
@@ -1092,6 +1163,7 @@ export default definePlugin({
         FluxDispatcher.subscribe("GUILD_SELECT",        onGuildSelect);
         FluxDispatcher.subscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
         FluxDispatcher.subscribe("VOICE_STATE_UPDATES", onVoiceChannelSelect);
+        FluxDispatcher.subscribe("MESSAGE_CREATE",      onMessageCreate);
 
         mainObserver = new MutationObserver(onMutation);
         mainObserver.observe(document.body, { childList: true, subtree: true });
@@ -1112,6 +1184,7 @@ export default definePlugin({
         FluxDispatcher.unsubscribe("GUILD_SELECT",        onGuildSelect);
         FluxDispatcher.unsubscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
         FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", onVoiceChannelSelect);
+        FluxDispatcher.unsubscribe("MESSAGE_CREATE",      onMessageCreate);
         document.documentElement.style.removeProperty("--af-menu-origin");
         // Clean up any stuck exit clones
         document.querySelectorAll(`[${ANIMATED_ATTR}="exit"]`).forEach(el => el.remove());
