@@ -48,7 +48,8 @@ const ANIMATED_ATTR  = "data-af-animated";
 const EXIT_ZINDEX    = "9999";
 
 const EasingCSS: Record<EasingName, string> = {
-    smooth:  "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    // Steep fast start, very long soft tail — the gold standard for fluid UI
+    smooth:  "cubic-bezier(0.16, 1, 0.3, 1)",
     snappy:  "cubic-bezier(0.34, 1.0,  0.64, 1.0)",
     bouncy:  "cubic-bezier(0.34, 1.56, 0.64, 1.0)",
     linear:  "linear",
@@ -58,11 +59,11 @@ const EasingCSS: Record<EasingName, string> = {
 
 /** translate values (from → to 0,0) for enter slide animations */
 const SlideTranslate: Record<string, [string, string]> = {
-    up:       ["0", "18px"],
-    down:     ["0", "-18px"],
-    left:     ["22px", "0"],
-    right:    ["-22px", "0"],
-    forwards: ["18px", "0"],
+    up:       ["0", "14px"],
+    down:     ["0", "-14px"],
+    left:     ["16px", "0"],
+    right:    ["-16px", "0"],
+    forwards: ["14px", "0"],
 };
 
 // ─── WAAPI keyframes ──────────────────────────────────────────────────────────
@@ -203,6 +204,81 @@ function onGuildSelect(event: any) {
         dirState.direction = idx >= dirState.prevGuildIndex ? "forward" : "backward";
     }
     if (idx !== -1) dirState.prevGuildIndex = idx;
+}
+
+// ─── Voice channel switch animation ──────────────────────────────────────────
+
+function animateVoicePanel() {
+    const targets = document.querySelectorAll<HTMLElement>(
+        "[class*='voiceUsers_'] > *, [class*='voiceBarContainer_'], [class*='rtcConnectionStatus_']"
+    );
+    targets.forEach((el, i) => {
+        el.animate([
+            { opacity: 0, transform: "scale(0.72) translateY(6px)" },
+            { opacity: 1, transform: "scale(1) translateY(0)" },
+        ], {
+            duration: 220,
+            delay: i * 28,
+            easing: EasingCSS.bouncy,
+            fill: "backwards",
+        });
+    });
+}
+
+function onVoiceChannelSelect(_event: any) {
+    setTimeout(animateVoicePanel, 90);
+}
+
+// ─── Channel drag lift effect ─────────────────────────────────────────────────
+
+const DRAG_STYLE_ID = "swancord-af-drag";
+const DRAG_CLASS    = "af-dragging";
+
+const DRAG_CSS = `
+.af-dragging {
+    opacity: 0.75 !important;
+    transform: scale(1.05) rotate(1.5deg) !important;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.4) !important;
+    z-index: 999 !important;
+    transition: none !important;
+    border-radius: 6px !important;
+    cursor: grabbing !important;
+}
+[data-list-item-id^="channels___"]:not(.af-dragging) {
+    transition: transform 170ms cubic-bezier(0.16, 1, 0.3, 1), opacity 170ms ease !important;
+}
+`;
+
+function onDragStartAF(e: DragEvent) {
+    const target = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-list-item-id^='channels___'], [class*='containerDefault_']"
+    );
+    if (!target) return;
+    target.classList.add(DRAG_CLASS);
+    target.animate([
+        { transform: "scale(1) rotate(0deg)", opacity: 1 },
+        { transform: "scale(1.05) rotate(1.5deg)", opacity: 0.75 },
+    ], { duration: 130, easing: EasingCSS.snappy, fill: "forwards" });
+}
+
+function onDragEndAF(e: DragEvent) {
+    const target = (e.target as HTMLElement).closest<HTMLElement>(
+        "[data-list-item-id^='channels___'], [class*='containerDefault_']"
+    );
+    if (!target) return;
+    target.classList.remove(DRAG_CLASS);
+    target.animate([
+        { transform: "scale(1.05) rotate(1.5deg)", opacity: 0.75 },
+        { transform: "scale(1) rotate(0deg)",      opacity: 1 },
+    ], { duration: 220, easing: EasingCSS.bouncy, fill: "none" });
+}
+
+function injectDragCSS() {
+    if (document.getElementById(DRAG_STYLE_ID)) return;
+    const el = document.createElement("style");
+    el.id = DRAG_STYLE_ID;
+    el.textContent = DRAG_CSS;
+    document.head.appendChild(el);
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -577,7 +653,7 @@ function animateEnter(el: HTMLElement, cfg: ModuleConfig) {
     el.animate(frames, {
         duration: opts.duration,
         easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
-        fill: "none",
+        fill: "backwards",
     });
 }
 
@@ -600,7 +676,7 @@ function accordionEnter(el: HTMLElement, opts: ReturnType<typeof getModuleOption
     ], {
         duration: opts.duration,
         easing: EasingCSS[opts.easing] ?? EasingCSS.smooth,
-        fill: "none",
+        fill: "backwards",
     });
 
     anim.onfinish = () => {
@@ -677,10 +753,13 @@ function onMutation(mutations: MutationRecord[]) {
         for (const node of Array.from(m.addedNodes)) {
             if (!(node instanceof HTMLElement)) continue;
             handleAdded(node);
-            // Also check children for elements like modals that are wrapped
-            node.querySelectorAll<HTMLElement>("*").forEach(child => {
-                if (child.children.length < 15) handleAdded(child);
-            });
+            // Also check children for elements like modals/popouts that are wrapped
+            // Limit depth: only walk if the node itself didn't already classify
+            if (!classify(node)) {
+                node.querySelectorAll<HTMLElement>("*").forEach(child => {
+                    if (child.children.length < 15) handleAdded(child);
+                });
+            }
         }
 
         // Exit animations
@@ -697,6 +776,8 @@ function handleAdded(el: HTMLElement) {
     // Skip already-animated, invisible, or exit clones
     if (el.getAttribute(ANIMATED_ATTR)) return;
     if (!el.isConnected) return;
+    // Skip if any ancestor was already animated — prevents parent+child double-fire
+    if (el.closest(`[${ANIMATED_ATTR}]`)) return;
 
     const cfg = classify(el);
     if (!cfg) return;
@@ -813,10 +894,15 @@ export default definePlugin({
 
     start() {
         injectHoverCSS();
+        injectDragCSS();
         setupIntersectionObserver();
         document.addEventListener("contextmenu", onContextMenu, true);
-        FluxDispatcher.subscribe("CHANNEL_SELECT", onChannelSelect);
-        FluxDispatcher.subscribe("GUILD_SELECT", onGuildSelect);
+        document.addEventListener("dragstart", onDragStartAF, true);
+        document.addEventListener("dragend",   onDragEndAF,   true);
+        FluxDispatcher.subscribe("CHANNEL_SELECT",      onChannelSelect);
+        FluxDispatcher.subscribe("GUILD_SELECT",        onGuildSelect);
+        FluxDispatcher.subscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
+        FluxDispatcher.subscribe("VOICE_STATE_UPDATES", onVoiceChannelSelect);
 
         mainObserver = new MutationObserver(onMutation);
         mainObserver.observe(document.body, { childList: true, subtree: true });
@@ -828,13 +914,20 @@ export default definePlugin({
         intersectionObserver?.disconnect();
         intersectionObserver = null;
         document.getElementById(HOVER_STYLE_ID)?.remove();
+        document.getElementById(DRAG_STYLE_ID)?.remove();
         document.removeEventListener("contextmenu", onContextMenu, true);
-        FluxDispatcher.unsubscribe("CHANNEL_SELECT", onChannelSelect);
-        FluxDispatcher.unsubscribe("GUILD_SELECT", onGuildSelect);
+        document.removeEventListener("dragstart", onDragStartAF, true);
+        document.removeEventListener("dragend",   onDragEndAF,   true);
+        FluxDispatcher.unsubscribe("CHANNEL_SELECT",      onChannelSelect);
+        FluxDispatcher.unsubscribe("GUILD_SELECT",        onGuildSelect);
+        FluxDispatcher.unsubscribe("VOICE_CHANNEL_SELECT", onVoiceChannelSelect);
+        FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", onVoiceChannelSelect);
         document.documentElement.style.removeProperty("--af-menu-origin");
         // Clean up any stuck exit clones
         document.querySelectorAll(`[${ANIMATED_ATTR}="exit"]`).forEach(el => el.remove());
         // Remove animated markers
         document.querySelectorAll(`[${ANIMATED_ATTR}]`).forEach(el => el.removeAttribute(ANIMATED_ATTR));
+        // Clean up drag classes
+        document.querySelectorAll(`.${DRAG_CLASS}`).forEach(el => el.classList.remove(DRAG_CLASS));
     },
 });
