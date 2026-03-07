@@ -3,6 +3,7 @@
  * Copyright (c) 2022 Vendicated and contributors
  */
 
+import { useSettings } from "@api/Settings";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { Divider } from "@components/Divider";
 import { GithubIcon, LogIcon, PaintbrushIcon } from "@components/Icons";
@@ -59,13 +60,13 @@ function InfoCard({
 
 function InfoTab() {
     const [latest, setLatest] = React.useState<string>("…");
+    const settings = useSettings();
 
     React.useEffect(() => {
         let alive = true;
         getLatestSwancordVersion()
             .then(v => {
                 if (!alive) return;
-                // If your util returns empty/unknown, keep it readable
                 const safe = (v && v.trim().length) ? v : "Unknown";
                 setLatest(safe);
             })
@@ -76,8 +77,19 @@ function InfoTab() {
 
     const installedBuild = gitHash ? String(gitHash).slice(0, 7) : "devbuild";
 
+    const enabledPlugins = React.useMemo(() => {
+        try {
+            return Object.keys(Swancord.Plugins.plugins).filter(n => Swancord.Plugins.isPluginEnabled(n)).length;
+        } catch { return "—"; }
+    }, []);
+
+    const enabledThemes = React.useMemo(() => {
+        try {
+            return (settings.enabledThemes as string[] | undefined)?.length ?? 0;
+        } catch { return 0; }
+    }, []);
+
     const openExternal = (url: string) => {
-        // Use native helper if present (matches your SwancordSettings tab)
         // @ts-ignore
         if (globalThis.SwancordNative?.native?.openExternal) SwancordNative.native.openExternal(url);
         else window.open(url, "_blank", "noopener,noreferrer");
@@ -90,14 +102,31 @@ function InfoTab() {
                 subtitle="Swancord is a custom Discord client extension focused on customization, performance tweaks, and developer-level control."
             >
                 <div style={{ display: "grid", gap: 6 }}>
-                    {/* ✅ Latest version from website/GitHub util */}
                     <div><b>Version (Latest):</b> {latest}</div>
-
-                    {/* ✅ Installed build hash/devbuild stays separate */}
                     <div><b>Installed Build:</b> {installedBuild}</div>
-
                     <div><b>Channel:</b> Stable</div>
                     <div><b>Runtime:</b> Production</div>
+                </div>
+            </InfoCard>
+
+            <InfoCard title="Stats">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    {[
+                        { label: "Plugins Enabled", value: enabledPlugins },
+                        { label: "Active Themes", value: enabledThemes },
+                        { label: "Build Hash", value: installedBuild },
+                        { label: "Channel", value: "Stable" },
+                    ].map(({ label, value }) => (
+                        <div key={label} style={{
+                            background: "var(--background-primary)",
+                            border: "1px solid var(--background-modifier-accent)",
+                            borderRadius: 10,
+                            padding: "12px 14px",
+                        }}>
+                            <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: 4, letterSpacing: "0.04em", textTransform: "uppercase" }}>{label}</div>
+                            <div style={{ fontSize: "1.3rem", fontWeight: 700, letterSpacing: "-0.03em" }}>{value}</div>
+                        </div>
+                    ))}
                 </div>
             </InfoCard>
 
