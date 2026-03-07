@@ -37,8 +37,9 @@ waitFor(["dispatch", "subscribe"], m => {
 
     // Importing this directly causes all webpack commons to be imported, which can easily cause circular dependencies.
     // For this reason, use a non import access here.
-    // Use queueMicrotask to defer until after the esbuild IIFE completes and window.Swancord is assigned.
-    queueMicrotask(() => Swancord.Api.PluginManager.subscribeAllPluginsFluxEvents(m));
+    // Use setTimeout to defer until after the esbuild IIFE completes and window.Swancord is assigned.
+    // queueMicrotask is not sufficient — it can fire before the IIFE return is assigned in certain Electron contexts.
+    setTimeout(() => Swancord.Api.PluginManager.subscribeAllPluginsFluxEvents(m), 0);
 });
 
 export let ComponentDispatch: any;

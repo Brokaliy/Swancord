@@ -134,5 +134,5 @@ waitForStore("ThemeStore", m => {
     ThemeStore = m;
     // Importing this directly causes all webpack commons to be imported, which can easily cause circular dependencies.
     // For this reason, use a non import access here.
-    queueMicrotask(() => Swancord.Api.Themes.initQuickCssThemeStore(m));
+    setTimeout(() => Swancord.Api.Themes.initQuickCssThemeStore(m), 0);
 });
