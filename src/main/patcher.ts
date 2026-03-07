@@ -31,11 +31,18 @@ const injectorPath = require.main!.filename;
 // special discord_arch_electron injection method
 const asarName = require.main!.path.endsWith("app.asar") ? "_app.asar" : "app.asar";
 
-// The original app.asar — handle both old (app/index.js outside asar) and
-// new (app.asar/app_bootstrap/index.js inside asar) Discord load paths
+// The original app.asar — handle three cases:
+// 1. Outside asar entirely (old app/index.js style)
+// 2. Root of a stub app.asar created by patchWin32Updater (index.js at asar root)
+//    → must look for _app.asar (the renamed original)
+// 3. Inside a subdirectory of app.asar (new app.asar/app_bootstrap/index.js style)
+//    → go up one level to reach asar root
+const injectorDir = dirname(injectorPath);
 const asarPath = injectorPath.includes(".asar")
-    ? join(dirname(injectorPath), "..") // inside asar: go up to asar root
-    : join(dirname(injectorPath), "..", asarName); // outside asar: classic path
+    ? injectorDir.endsWith(".asar")
+        ? join(injectorDir, "..", asarName) // stub root asar (patchWin32Updater): sibling _app.asar
+        : join(injectorDir, "..") // subdirectory inside asar: go up to asar root
+    : join(injectorDir, "..", asarName); // outside asar: classic path
 
 // Newer Discord versions removed the root package.json from app.asar
 let discordPkg: { main: string };
