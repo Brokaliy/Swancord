@@ -25,6 +25,12 @@ import { IS_VANILLA } from "./utils/constants";
 
 console.log("[Swancord] Starting up...");
 
+// Guard against double-loading: patchWin32Updater stub app.asar/index.js AND
+// discord_desktop_core/index.js can both require this patcher in the same session.
+// Only the first invocation should fully run; subsequent ones are no-ops.
+if (!(global as any).__swancordPatcherLoaded) {
+(global as any).__swancordPatcherLoaded = true;
+
 // Our injector file at app/index.js (old) or app.asar/app_bootstrap/index.js (new)
 const injectorPath = require.main!.filename;
 
@@ -176,3 +182,5 @@ if (!IS_VANILLA) {
 
 console.log("[Swancord] Loading original Discord app.asar");
 require(require.main!.filename);
+
+} // end double-load guard
