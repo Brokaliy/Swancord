@@ -23,15 +23,22 @@ import type * as TSPattern from "ts-pattern";
 export let FluxDispatcher: t.FluxDispatcher;
 waitFor(["dispatch", "subscribe"], m => {
     FluxDispatcher = m;
-    // Importing this directly causes all webpack commons to be imported, which can easily cause circular dependencies.
-    // For this reason, use a non import access here.
-    Swancord.Api.PluginManager.subscribeAllPluginsFluxEvents(m);
 
+    // Register CONNECTION_OPEN first — this MUST run even if subscribeAllPluginsFluxEvents fails.
+    // In Discord 1.0.9227+, this waitFor fires synchronously during renderer init before
+    // esbuild assigns window.Swancord, so Swancord.Api would be undefined and throw.
+    // If that throw were to prevent this subscribe, _resolveReady() would never be called
+    // and all plugin startup (WebpackReady stage) would hang forever.
     const cb = () => {
         m.unsubscribe("CONNECTION_OPEN", cb);
         _resolveReady();
     };
     m.subscribe("CONNECTION_OPEN", cb);
+
+    // Importing this directly causes all webpack commons to be imported, which can easily cause circular dependencies.
+    // For this reason, use a non import access here.
+    // Use queueMicrotask to defer until after the esbuild IIFE completes and window.Swancord is assigned.
+    queueMicrotask(() => Swancord.Api.PluginManager.subscribeAllPluginsFluxEvents(m));
 });
 
 export let ComponentDispatch: any;
