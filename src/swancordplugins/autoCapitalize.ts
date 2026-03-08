@@ -19,11 +19,17 @@ const settings = definePluginSettings({
     },
 });
 
+const URL_RE = /https?:\/\//i;
+
 function capitalize(text: string, mode: string): string {
     if (!text.length) return text;
     if (mode === "sentences") {
-        return text.replace(/(^|[.!?]\s+)(\w)/g, (_, sep, ch) => sep + ch.toUpperCase());
+        return text.replace(/(^|[.!?]\s+)(\S+)/g, (match, sep, word) =>
+            URL_RE.test(word) ? match : sep + word.charAt(0).toUpperCase() + word.slice(1)
+        );
     }
+    // Don't capitalize if the message starts with a URL
+    if (URL_RE.test(text)) return text;
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
