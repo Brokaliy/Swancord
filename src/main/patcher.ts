@@ -180,7 +180,14 @@ if (!IS_VANILLA) {
     console.log("[Swancord] Running in vanilla mode. Not loading Swancord");
 }
 
-console.log("[Swancord] Loading original Discord app.asar");
-require(require.main!.filename);
+// Only bootstrap Discord if we are the entry point (e.g. loaded via a stub app.asar).
+// When loaded from discord_desktop_core, Discord's bootstrap is already running —
+// calling require(main.filename) again would re-trigger discord_desktop_core which
+// causes a double-load of patcher.js (second ipcMain handler registration).
+const needsBootstrap = injectorPath !== require.main!.filename;
+if (needsBootstrap) {
+    console.log("[Swancord] Loading original Discord app.asar");
+    require(require.main!.filename);
+}
 
 } // end double-load guard
