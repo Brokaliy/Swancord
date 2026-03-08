@@ -141,7 +141,7 @@ const buildConfigs = ([
         outfile: "dist/renderer.js",
         format: "iife",
         target: ["esnext"],
-        footer: { js: "//# sourceURL=file:///VencordRenderer\n" + sourceMapFooter("renderer") },
+        footer: { js: "window.Swancord=Swancord;\n//# sourceURL=file:///VencordRenderer\n" + sourceMapFooter("renderer") },
         globalName: "Swancord",
         sourcemap,
         plugins: [
