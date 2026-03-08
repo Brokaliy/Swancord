@@ -199,9 +199,7 @@ export default definePlugin({
 
     buildLayout(originalLayoutBuilder: SettingsLayoutBuilder) {
         const layout = originalLayoutBuilder.buildLayout();
-        // "$Root" is the top-level builder key; guard against Discord renaming it
-        // by also allowing through if the layout is large (root has 15+ entries, sub-layouts have ≤3)
-        if (originalLayoutBuilder.key !== "$Root" && layout.length <= 4) return layout;
+        if (originalLayoutBuilder.key !== "$Root") return layout;
         if (!Array.isArray(layout)) return layout;
 
         if (layout.some(s => s?.key === "swancord_section")) return layout;
