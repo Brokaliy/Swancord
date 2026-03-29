@@ -8,9 +8,11 @@
  * SPOTIFY_PLAYER_STATE events to it via IPC.
  */
 
-import definePlugin from "@utils/types";
+import definePlugin, { PluginNative } from "@utils/types";
 import { Devs } from "@utils/constants";
 import { FluxDispatcher } from "@webpack/common";
+
+const Native = Native as PluginNative<typeof import("./native")>;
 
 const PORT = 8975;
 
@@ -34,7 +36,7 @@ interface PlayerState {
 }
 
 function onPlayerState(e: PlayerState) {
-    VencordNative.pluginHelpers.SpotifyBridge.updateState({
+    Native.updateState({
         title:    e.track?.name ?? "",
         artist:   e.track?.artists?.map(a => a.name).join(", ") ?? "",
         album:    e.track?.album?.name ?? "",
@@ -52,12 +54,12 @@ export default definePlugin({
     authors: [Devs._7n7],
 
     start() {
-        VencordNative.pluginHelpers.SpotifyBridge.start(PORT);
+        Native.start(PORT);
         FluxDispatcher.subscribe("SPOTIFY_PLAYER_STATE", onPlayerState);
     },
 
     stop() {
-        VencordNative.pluginHelpers.SpotifyBridge.stop();
+        Native.stop();
         FluxDispatcher.unsubscribe("SPOTIFY_PLAYER_STATE", onPlayerState);
     },
 });
