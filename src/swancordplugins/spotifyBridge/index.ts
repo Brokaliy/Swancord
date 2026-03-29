@@ -8,7 +8,7 @@
  * SPOTIFY_PLAYER_STATE events to it via IPC.
  */
 
-import { definePlugin } from "@utils/types";
+import definePlugin from "@utils/types";
 import { Devs } from "@utils/constants";
 import { FluxDispatcher } from "@webpack/common";
 
