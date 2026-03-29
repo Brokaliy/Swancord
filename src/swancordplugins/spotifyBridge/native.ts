@@ -28,16 +28,20 @@ export async function start(_event: IpcMainInvokeEvent, port: number): Promise<v
         const elapsed = state.isPlaying ? Date.now() - snapshotAt : 0;
         const livePos = Math.min(state.position + elapsed, state.duration);
 
+        const fmt = (ms: number) => {
+            const s = Math.floor(ms / 1000);
+            return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        };
+
         // Field order is intentional — Rainmeter regex relies on it
         const payload = JSON.stringify({
             title:     state.title,
             artist:    state.artist,
             album:     state.album,
             albumArt:  state.albumArt,
-            duration:  state.duration,
-            position:  livePos,
+            posStr:    fmt(livePos),
+            durStr:    fmt(state.duration),
             isPlaying: state.isPlaying,
-            volume:    state.volume,
         });
 
         res.writeHead(200, {
