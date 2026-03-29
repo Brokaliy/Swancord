@@ -12,7 +12,7 @@ import definePlugin, { PluginNative } from "@utils/types";
 import { Devs } from "@utils/constants";
 import { FluxDispatcher } from "@webpack/common";
 
-const Native = Native as PluginNative<typeof import("./native")>;
+const Native = SwancordNative.pluginHelpers.SpotifyBridge as PluginNative<typeof import("./native")>;
 
 const PORT = 8975;
 
