@@ -1,14 +1,20 @@
 /*
  * SpotifyBridge — native.ts
  * Runs in the Electron main/preload process (has full Node.js access).
- * Called from the renderer via VencordNative.pluginHelpers.SpotifyBridge.*
  */
 
 import * as http from "http";
+import * as https from "https";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import type { IpcMainInvokeEvent } from "electron";
+
+const COVER_PATH = path.join(os.tmpdir(), "swancord_cover.jpg");
 
 let server: http.Server | null = null;
 let snapshotAt = 0;
+let lastAlbumArt = "";
 
 let state = {
     title: "",
@@ -21,27 +27,41 @@ let state = {
     volume: 0,
 };
 
+function downloadCover(url: string): void {
+    if (!url || url === lastAlbumArt) return;
+    lastAlbumArt = url;
+
+    const file = fs.createWriteStream(COVER_PATH);
+    https.get(url, res => {
+        res.pipe(file);
+        file.on("finish", () => file.close());
+    }).on("error", () => {
+        fs.unlink(COVER_PATH, () => {});
+    });
+}
+
+const fmt = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
 export async function start(_event: IpcMainInvokeEvent, port: number): Promise<void> {
     if (server) return;
 
     server = http.createServer((_req, res) => {
         const elapsed = state.isPlaying ? Date.now() - snapshotAt : 0;
         const livePos = Math.min(state.position + elapsed, state.duration);
+        const progress = state.duration > 0 ? livePos / state.duration : 0;
 
-        const fmt = (ms: number) => {
-            const s = Math.floor(ms / 1000);
-            return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-        };
-
-        // Field order is intentional — Rainmeter regex relies on it
         const payload = JSON.stringify({
-            title:     state.title,
-            artist:    state.artist,
-            album:     state.album,
-            albumArt:  state.albumArt,
-            posStr:    fmt(livePos),
-            durStr:    fmt(state.duration),
-            isPlaying: state.isPlaying,
+            title:      state.title,
+            artist:     state.artist,
+            album:      state.album,
+            posStr:     fmt(livePos),
+            durStr:     fmt(state.duration),
+            progress:   progress,
+            isPlaying:  state.isPlaying,
+            coverPath:  COVER_PATH,
         });
 
         res.writeHead(200, {
@@ -66,6 +86,7 @@ export async function stop(_event: IpcMainInvokeEvent): Promise<void> {
 }
 
 export async function updateState(_event: IpcMainInvokeEvent, newState: typeof state): Promise<void> {
+    downloadCover(newState.albumArt);
     state = newState;
     snapshotAt = Date.now();
 }
